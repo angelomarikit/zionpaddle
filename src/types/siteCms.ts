@@ -55,6 +55,11 @@ export type CatalogProductPatch = {
   /** Additional product-page images (not the active colorway hero). */
   galleryImages?: string[]
   collectionSlugs?: string[]
+  saleCountdownEnabled?: boolean
+  saleCountdownMode?: 'fixed' | 'rolling'
+  saleCountdownEndsAt?: string | null
+  saleCountdownRollingMinutes?: number | null
+  saleCountdownHeadline?: string | null
 }
 
 export type CatalogCollectionPatch = {

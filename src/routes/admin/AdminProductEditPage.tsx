@@ -538,6 +538,103 @@ export function AdminProductEditPage() {
           </AdminCard>
 
           <AdminCard className="p-5">
+            <h2 className="font-semibold">Sale urgency</h2>
+            <p className="mt-1 text-xs text-admin-muted">
+              Red countdown on the product page — e.g. &ldquo;Hurry! 5 minutes left&rdquo;.
+            </p>
+            <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={draft.sale_countdown_enabled}
+                onChange={(e) => {
+                  const on = e.target.checked
+                  setDraft({
+                    ...draft,
+                    sale_countdown_enabled: on,
+                    ...(on && !draft.sale_countdown_headline
+                      ? { sale_countdown_headline: 'Hurry!' }
+                      : {}),
+                    ...(on && !draft.sale_countdown_rolling_minutes
+                      ? { sale_countdown_rolling_minutes: 5 }
+                      : {}),
+                  })
+                }}
+              />
+              Show sale countdown on product page
+            </label>
+            {draft.sale_countdown_enabled ? (
+              <div className="mt-4 space-y-3">
+                <label className="block">
+                  <span className={adminLabel}>Headline</span>
+                  <input
+                    className={adminField}
+                    value={draft.sale_countdown_headline ?? ''}
+                    placeholder="Hurry!"
+                    onChange={(e) => setDraft({ ...draft, sale_countdown_headline: e.target.value })}
+                  />
+                </label>
+                <label className="block">
+                  <span className={adminLabel}>Timer type</span>
+                  <select
+                    className={adminField}
+                    value={draft.sale_countdown_mode}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        sale_countdown_mode: e.target.value === 'fixed' ? 'fixed' : 'rolling',
+                      })
+                    }
+                  >
+                    <option value="rolling">Rolling — restarts every X minutes (unlimited)</option>
+                    <option value="fixed">Fixed — ends at a date &amp; time</option>
+                  </select>
+                </label>
+                {draft.sale_countdown_mode === 'rolling' ? (
+                  <label className="block">
+                    <span className={adminLabel}>Minutes per cycle</span>
+                    <input
+                      type="number"
+                      min={1}
+                      className={adminField}
+                      value={draft.sale_countdown_rolling_minutes ?? 5}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          sale_countdown_rolling_minutes: Math.max(1, Number(e.target.value) || 5),
+                        })
+                      }
+                    />
+                    <span className="mt-1 block text-xs text-admin-muted">
+                      When the timer hits zero it starts again — good for ongoing promos.
+                    </span>
+                  </label>
+                ) : (
+                  <label className="block">
+                    <span className={adminLabel}>Sale ends</span>
+                    <input
+                      type="datetime-local"
+                      className={adminField}
+                      value={
+                        draft.sale_countdown_ends_at
+                          ? new Date(draft.sale_countdown_ends_at).toISOString().slice(0, 16)
+                          : ''
+                      }
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          sale_countdown_ends_at: e.target.value
+                            ? new Date(e.target.value).toISOString()
+                            : null,
+                        })
+                      }
+                    />
+                  </label>
+                )}
+              </div>
+            ) : null}
+          </AdminCard>
+
+          <AdminCard className="p-5">
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-semibold">Collections</h2>
               <Link to="/admin/collections" className="text-xs text-admin-link hover:underline">

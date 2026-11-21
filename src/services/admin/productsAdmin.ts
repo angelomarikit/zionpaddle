@@ -41,6 +41,11 @@ export type ProductDraft = {
   colorways: ColorwayDraft[]
   gallery_images: string[]
   quantity_on_hand: number
+  sale_countdown_enabled: boolean
+  sale_countdown_mode: 'fixed' | 'rolling'
+  sale_countdown_ends_at: string | null
+  sale_countdown_rolling_minutes: number | null
+  sale_countdown_headline: string | null
 }
 
 function mapRowToDraft(row: Record<string, unknown>, colorways: ColorwayDraft[], qty: number): ProductDraft {
@@ -60,6 +65,11 @@ function mapRowToDraft(row: Record<string, unknown>, colorways: ColorwayDraft[],
     colorways,
     gallery_images: parseGalleryImagesJson(row.gallery_images),
     quantity_on_hand: qty,
+    sale_countdown_enabled: Boolean(row.sale_countdown_enabled),
+    sale_countdown_mode: row.sale_countdown_mode === 'rolling' ? 'rolling' : 'fixed',
+    sale_countdown_ends_at: (row.sale_countdown_ends_at as string | null) ?? null,
+    sale_countdown_rolling_minutes: (row.sale_countdown_rolling_minutes as number | null) ?? null,
+    sale_countdown_headline: (row.sale_countdown_headline as string | null) ?? null,
   }
 }
 
@@ -127,6 +137,11 @@ export async function listStaffProducts(): Promise<{ products: ProductDraft[]; o
       })),
       gallery_images: patches.find((x) => x.slug === p.slug)?.galleryImages ?? p.images ?? [],
       quantity_on_hand: stock[p.slug] ?? 0,
+      sale_countdown_enabled: patches.find((x) => x.slug === p.slug)?.saleCountdownEnabled ?? false,
+      sale_countdown_mode: patches.find((x) => x.slug === p.slug)?.saleCountdownMode ?? 'rolling',
+      sale_countdown_ends_at: patches.find((x) => x.slug === p.slug)?.saleCountdownEndsAt ?? null,
+      sale_countdown_rolling_minutes: patches.find((x) => x.slug === p.slug)?.saleCountdownRollingMinutes ?? 5,
+      sale_countdown_headline: patches.find((x) => x.slug === p.slug)?.saleCountdownHeadline ?? null,
     })),
   }
 }
@@ -189,6 +204,11 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
       specs: draft.specs,
       features: [],
       gallery_images,
+      sale_countdown_enabled: draft.sale_countdown_enabled,
+      sale_countdown_mode: draft.sale_countdown_mode,
+      sale_countdown_ends_at: draft.sale_countdown_ends_at,
+      sale_countdown_rolling_minutes: draft.sale_countdown_rolling_minutes,
+      sale_countdown_headline: draft.sale_countdown_headline?.trim() || null,
       updated_at: new Date().toISOString(),
     }
     let productId = (existing as { id: string } | null)?.id
@@ -258,6 +278,11 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
       hero: draft.hero,
       galleryImages: draft.gallery_images,
       collectionSlugs: draft.collection_slugs,
+      saleCountdownEnabled: draft.sale_countdown_enabled,
+      saleCountdownMode: draft.sale_countdown_mode,
+      saleCountdownEndsAt: draft.sale_countdown_ends_at,
+      saleCountdownRollingMinutes: draft.sale_countdown_rolling_minutes,
+      saleCountdownHeadline: draft.sale_countdown_headline,
     })
     return { ok: true, online: true }
   }
@@ -277,6 +302,11 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
     hero: draft.hero,
     galleryImages: draft.gallery_images,
     collectionSlugs: draft.collection_slugs,
+    saleCountdownEnabled: draft.sale_countdown_enabled,
+    saleCountdownMode: draft.sale_countdown_mode,
+    saleCountdownEndsAt: draft.sale_countdown_ends_at,
+    saleCountdownRollingMinutes: draft.sale_countdown_rolling_minutes,
+    saleCountdownHeadline: draft.sale_countdown_headline,
   })
   return { ok: true, online: false }
 }
@@ -332,5 +362,10 @@ export function emptyProductDraft(): ProductDraft {
     ],
     gallery_images: [],
     quantity_on_hand: 0,
+    sale_countdown_enabled: false,
+    sale_countdown_mode: 'rolling',
+    sale_countdown_ends_at: null,
+    sale_countdown_rolling_minutes: 5,
+    sale_countdown_headline: 'Hurry!',
   }
 }

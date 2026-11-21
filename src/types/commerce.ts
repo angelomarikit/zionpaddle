@@ -1,3 +1,5 @@
+import type { ProductSaleCountdown } from '../lib/catalog/saleCountdown'
+
 export type Colorway = {
   id: string
   slug: string
@@ -32,6 +34,7 @@ export type Product = {
   weightGrams: number
   hero?: boolean
   images: string[]
+  saleCountdown?: ProductSaleCountdown
 }
 
 export type Collection = {

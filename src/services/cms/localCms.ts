@@ -1,5 +1,6 @@
 import type { CatalogCollectionPatch, CatalogProductPatch, SitePage, SiteSection } from '../../types/siteCms'
 import type { Collection, Product } from '../../types/commerce'
+import type { ProductSaleCountdown } from '../../lib/catalog/saleCountdown'
 import { defaultSitePages, defaultSiteSections } from '../../data/cms/defaults'
 
 import { getMigratedStorageItem } from '../../lib/storage/migrateKey'
@@ -124,8 +125,28 @@ export function applyProductPatches(products: Product[]): Product[] {
       hero: patch.hero ?? p.hero,
       images: patch.galleryImages ?? p.images,
       collectionSlugs: patch.collectionSlugs ?? p.collectionSlugs,
+      saleCountdown:
+        patch.saleCountdownEnabled === false
+          ? undefined
+          : (patchSaleCountdown(patch) ?? p.saleCountdown),
     }
   })
+}
+
+function patchSaleCountdown(patch: CatalogProductPatch): ProductSaleCountdown | undefined {
+  if (patch.saleCountdownEnabled === false) return undefined
+  if (patch.saleCountdownEnabled !== true && patch.saleCountdownMode === undefined) {
+    return undefined
+  }
+  const enabled = patch.saleCountdownEnabled ?? true
+  if (!enabled) return undefined
+  return {
+    enabled: true,
+    mode: patch.saleCountdownMode ?? 'rolling',
+    endsAt: patch.saleCountdownEndsAt ?? undefined,
+    rollingMinutes: patch.saleCountdownRollingMinutes ?? undefined,
+    headline: patch.saleCountdownHeadline ?? undefined,
+  }
 }
 
 export function applyCollectionPatches(collections: Collection[]): Collection[] {

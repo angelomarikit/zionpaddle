@@ -1,6 +1,7 @@
 import type { Collection, Colorway, Product } from '../types/commerce'
 import { defaultDbGripSizes, primaryColorwayFromUploads } from '../lib/catalog/customProduct'
 import { parseGalleryImagesJson } from '../lib/catalog/productGallery'
+import { saleCountdownFromRow } from '../lib/catalog/saleCountdown'
 import { getSupabase, supabaseConfigured } from '../lib/supabase/client'
 import { products as mockProducts } from '../data/mock/products'
 
@@ -19,6 +20,11 @@ type DbProduct = {
   specs: { label: string; value: string }[]
   features: { index: string; title: string; body: string; image?: string }[]
   grip_sizes: { id: string; label: string; circumferenceCm: string; soldOut?: boolean }[]
+  sale_countdown_enabled?: boolean
+  sale_countdown_mode?: string | null
+  sale_countdown_ends_at?: string | null
+  sale_countdown_rolling_minutes?: number | null
+  sale_countdown_headline?: string | null
   product_colorways?: {
     external_key: string
     slug: string
@@ -76,11 +82,12 @@ function mapProduct(row: DbProduct): Product {
     specs: row.specs ?? [],
     features: row.features?.length ? row.features : [],
     images: gallery,
+    saleCountdown: saleCountdownFromRow(row),
   }
 }
 
 const PRODUCT_BASE_COLS =
-  'id, slug, name, subtitle, description, price_php, compare_at_php, collection_slugs, weight_grams, hero, specs, features, grip_sizes'
+  'id, slug, name, subtitle, description, price_php, compare_at_php, collection_slugs, weight_grams, hero, specs, features, grip_sizes, sale_countdown_enabled, sale_countdown_mode, sale_countdown_ends_at, sale_countdown_rolling_minutes, sale_countdown_headline'
 
 async function attachColorways(
   sb: NonNullable<ReturnType<typeof getSupabase>>,

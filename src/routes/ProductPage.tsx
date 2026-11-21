@@ -15,6 +15,7 @@ import { useCart } from '../context/CartContext'
 import { dayoColorwayAssets } from '../data/media/dayoMedia'
 import { isDemoCatalogProduct, primaryProductImage, productHeroImage } from '../lib/catalog/customProduct'
 import { productPageGalleryUrls } from '../lib/catalog/productGallery'
+import { SaleCountdownBanner } from '../components/product/SaleCountdownBanner'
 import type { Product } from '../types/commerce'
 
 function productDetailCopy(product: Product): string[] {
@@ -186,6 +187,12 @@ export function ProductPage() {
               <p className="text-sm text-cream-muted line-through">{formatPhp(product.compareAtPhp)}</p>
             ) : null}
 
+            {product.saleCountdown?.enabled ? (
+              <div className="mt-4">
+                <SaleCountdownBanner productSlug={product.slug} countdown={product.saleCountdown} />
+              </div>
+            ) : null}
+
             <div className="mt-6 space-y-5">
               {product.colorways.length > 1 ? (
                 <VariantSwatches
@@ -243,11 +250,11 @@ export function ProductPage() {
         >
           <button
             type="button"
-            className="absolute right-4 top-4 rounded-full border border-black/15 bg-white p-2 shadow-md"
+            className="absolute right-4 top-4 z-10 flex size-11 items-center justify-center rounded-full border border-black/25 bg-surface-ink text-white shadow-[0_4px_20px_rgba(0,0,0,0.35)] transition hover:bg-black"
             onClick={() => setFullscreenImage(false)}
             aria-label="Close"
           >
-            <X className="size-5" />
+            <X className="size-5 stroke-[2.5]" aria-hidden />
           </button>
           <img
             src={mainImageSrc}

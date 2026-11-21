@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Star, X, ZoomIn } from 'lucide-react'
 import { formatPhp } from '../data/mock/products'
 import { findProductBySlug, useCatalog } from '../hooks/useCatalog'
@@ -32,6 +32,7 @@ export function ProductPage() {
   const { products, isLoading: catalogLoading } = useCatalog()
   const product = slug ? findProductBySlug(products, slug) : undefined
   const { addLine } = useCart()
+  const navigate = useNavigate()
 
   const [colorwayId, setColorwayId] = useState('')
   const [gripId, setGripId] = useState('')
@@ -92,8 +93,8 @@ export function ProductPage() {
     )
     .slice(0, 4)
 
-  const addToBag = () => {
-    if (grip.soldOut) return
+  const addToBagLine = (): boolean => {
+    if (grip.soldOut) return false
     addLine({
       productId: product.id,
       productSlug: product.slug,
@@ -105,6 +106,16 @@ export function ProductPage() {
       pricePhp: product.pricePhp,
       image: heroSrc,
     })
+    return true
+  }
+
+  const addToBag = () => {
+    addToBagLine()
+  }
+
+  const buyNow = () => {
+    if (!addToBagLine()) return
+    navigate('/checkout')
   }
 
   const detailParagraphs = productDetailCopy(product)
@@ -219,20 +230,30 @@ export function ProductPage() {
               />
             </div>
 
-            <div className="sticky bottom-4 z-40 mt-6 lg:static">
-              <Button
-                variant="coral"
-                className="w-full uppercase tracking-[0.12em] lg:w-auto"
-                onClick={addToBag}
-                disabled={grip.soldOut}
-              >
-                Add to bag
-              </Button>
+            <div className="sticky bottom-4 z-40 mt-6 w-full max-w-xl lg:static">
+              <div className="flex flex-col gap-3">
+                <Button
+                  variant="coral"
+                  className="w-full py-4 text-base tracking-[0.14em]"
+                  onClick={addToBag}
+                  disabled={grip.soldOut}
+                >
+                  Add to bag
+                </Button>
+                <Button
+                  variant="ink"
+                  className="w-full border-black/20 py-4 text-base tracking-[0.14em]"
+                  onClick={buyNow}
+                  disabled={grip.soldOut}
+                >
+                  Buy now
+                </Button>
+              </div>
             </div>
             <img
-              src="/assets/zion/trust-badges.jpg"
+              src="/assets/zion/trust-badges.png"
               alt="Legit seller, secure checkout, and data privacy"
-              className="mx-auto mt-4 w-full max-w-md"
+              className="mx-auto mt-5 w-full max-w-xl"
               loading="lazy"
             />
 

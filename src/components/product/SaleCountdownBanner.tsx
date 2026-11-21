@@ -59,18 +59,20 @@ export function SaleCountdownBanner({ productSlug, countdown, className = '' }: 
   const { clock, suffix } = saleCountdownOneLine(remainingMs)
 
   return (
-    <p
-      className={`text-base font-semibold leading-snug text-red-600 sm:text-lg ${className}`}
+    <div
+      className={`rounded-lg border border-red-800/30 bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 text-white shadow-[0_6px_20px_rgba(185,28,28,0.28)] sm:px-5 sm:py-3.5 ${className}`}
       role="status"
       aria-live="off"
       aria-atomic="true"
     >
-      <span className="uppercase tracking-wide">{headline}</span>
-      <span aria-hidden> — </span>
-      <span className="font-mono text-[1.05em] font-bold tabular-nums tracking-tight text-red-700 sm:text-[1.1em]">
-        {clock}
-      </span>
-      <span> {suffix}</span>
-    </p>
+      <p className="text-base font-semibold leading-snug sm:text-lg">
+        <span className="font-extrabold uppercase tracking-[0.08em]">{headline}</span>
+        <span aria-hidden> — </span>
+        <span className="font-mono text-[1.05em] font-bold tabular-nums tracking-tight text-white sm:text-[1.1em]">
+          {clock}
+        </span>
+        <span className="text-white/95"> {suffix}</span>
+      </p>
+    </div>
   )
 }

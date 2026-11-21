@@ -170,7 +170,7 @@ export function ProductPage() {
                       key={i}
                       className={`size-4 ${
                         reviewMeta.average >= i - 0.25
-                          ? 'fill-accent-volt text-accent-volt'
+                          ? 'fill-gold-600 text-gold-500'
                           : 'fill-black/10 text-black/20'
                       }`}
                     />

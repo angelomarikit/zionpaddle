@@ -14,7 +14,7 @@ function Stars({ value }: { value: number }) {
         <Star
           key={i}
           className={`size-4 ${
-            value >= i - 0.25 ? 'fill-accent-volt text-accent-volt' : 'fill-black/10 text-black/20'
+            value >= i - 0.25 ? 'fill-gold-600 text-gold-500' : 'fill-black/10 text-black/20'
           }`}
         />
       ))}

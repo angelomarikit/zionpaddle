@@ -1,4 +1,5 @@
 import type { SiteMediaAsset, SitePage, SiteSection } from '../../types/siteCms'
+import { parseHomeHeroExtra } from '../../lib/catalog/homeHero'
 import { defaultSitePages, defaultSiteSections } from '../../data/cms/defaults'
 import { getSupabase, supabaseConfigured } from '../../lib/supabase/client'
 import {
@@ -32,6 +33,7 @@ function mapSection(row: Record<string, unknown>): SiteSection {
     published: Boolean(row.published),
     sortOrder: Number(row.sort_order ?? 0),
     updatedAt: String(row.updated_at ?? ''),
+    extra: parseHomeHeroExtra(row.extra),
   }
 }
 
@@ -101,6 +103,7 @@ export async function saveSiteSection(
     alt_text: section.altText ?? null,
     published: section.published,
     sort_order: section.sortOrder,
+    extra: section.extra && Object.keys(section.extra).length ? section.extra : {},
     updated_at: new Date().toISOString(),
   }
   if (sb && supabaseConfigured) {

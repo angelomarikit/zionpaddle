@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchSitePages, fetchSiteSections, saveSitePage, saveSiteSection } from '../../services/cms/siteContent'
+import { listStaffProducts } from '../../services/admin/productsAdmin'
 import type { SitePage, SiteSection } from '../../types/siteCms'
 import { friendlyAdminError } from '../../lib/admin/messages'
 import { AdminPage, adminField, adminLabel } from '../../components/admin/AdminShell'
@@ -16,11 +18,13 @@ export function AdminContentPage() {
 
   const sectionsQuery = useQuery({ queryKey: ['admin', 'cms', 'sections'], queryFn: fetchSiteSections })
   const pagesQuery = useQuery({ queryKey: ['admin', 'cms', 'pages'], queryFn: fetchSitePages })
+  const productsQuery = useQuery({ queryKey: ['admin', 'products'], queryFn: listStaffProducts })
 
   if (sectionsQuery.isLoading || pagesQuery.isLoading) return <p className="text-sm">Loading content…</p>
 
   const sections = [...(sectionsQuery.data?.sections ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)
   const pages = pagesQuery.data?.pages ?? []
+  const liveProducts = (productsQuery.data?.products ?? []).filter((p) => p.published)
 
   const saveSection = async (section: SiteSection) => {
     setError(undefined)
@@ -64,7 +68,12 @@ export function AdminContentPage() {
           {sections
             .filter((s) => s.sectionKey === 'announcement')
             .map((s) => (
-              <SectionEditor key={s.sectionKey} section={s} onSave={saveSection} />
+              <SectionEditor
+                key={s.sectionKey}
+                section={s}
+                liveProducts={liveProducts}
+                onSave={saveSection}
+              />
             ))}
         </ul>
       </section>
@@ -75,7 +84,12 @@ export function AdminContentPage() {
           {sections
             .filter((s) => s.sectionKey !== 'announcement')
             .map((s) => (
-              <SectionEditor key={s.sectionKey} section={s} onSave={saveSection} />
+              <SectionEditor
+                key={s.sectionKey}
+                section={s}
+                liveProducts={liveProducts}
+                onSave={saveSection}
+              />
             ))}
         </ul>
       </section>
@@ -95,9 +109,11 @@ export function AdminContentPage() {
 
 function SectionEditor({
   section,
+  liveProducts,
   onSave,
 }: {
   section: SiteSection
+  liveProducts: { slug: string; name: string }[]
   onSave: (s: SiteSection) => Promise<void>
 }) {
   const [draft, setDraft] = useState(section)
@@ -170,6 +186,34 @@ function SectionEditor({
             />
           </label>
         )}
+        {draft.sectionKey === 'hero' ? (
+          <label className="block">
+            <span className={adminLabel}>Featured product (homepage hero)</span>
+            <select
+              className={adminField}
+              value={draft.extra?.homeProductSlug ?? ''}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  extra: { ...draft.extra, homeProductSlug: e.target.value || undefined },
+                })
+              }
+            >
+              <option value="">Automatic (product flagged as homepage hero)</option>
+              {liveProducts.map((p) => (
+                <option key={p.slug} value={p.slug}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-admin-muted">
+              Uses that product&apos;s images and price on the home hero.{' '}
+              <Link to="/admin/products" className="text-admin-link hover:underline">
+                Manage products
+              </Link>
+            </p>
+          </label>
+        ) : null}
         {!isAnnouncement && (draft.sectionKey === 'editorial' || draft.subheadline) && (
           <label className="block">
             Subheadline / accent line

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, Star } from 'lucide-react'
+import { ArrowRight, Star, X, ZoomIn } from 'lucide-react'
 import { formatPhp } from '../data/mock/products'
 import { findProductBySlug, useCatalog } from '../hooks/useCatalog'
 import { getProductReviews } from '../data/mock/reviews'
@@ -37,6 +37,7 @@ export function ProductPage() {
   const [unit, setUnit] = useState<'in' | 'cm'>('in')
   const [fit, setFit] = useState<'narrow' | 'true' | 'wide'>('true')
   const [galleryIndex, setGalleryIndex] = useState(0)
+  const [fullscreenImage, setFullscreenImage] = useState(false)
 
   useEffect(() => {
     if (!product) return
@@ -109,29 +110,41 @@ export function ProductPage() {
 
   return (
     <>
-      <SectionShell surface="cream" className="pt-28" wide>
-        <Link to="/collections" className="text-xs font-semibold uppercase tracking-[0.2em] text-cream-muted">
-          ← All paddles
-        </Link>
-        <div className="mt-8 grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
-          <div className="lg:sticky lg:top-24 lg:self-start">
-            <div className="relative flex min-h-[min(68vh,640px)] items-center justify-center overflow-hidden rounded-xl border border-black/8 bg-gradient-to-b from-[#f8f5ef] via-surface-cream to-[#ebe6de] p-6 sm:p-10">
+      <section className="full-bleed bg-gradient-to-b from-[#f8f5ef] via-surface-cream to-[#ebe6de] text-surface-ink">
+        <div className="grid lg:min-h-[100svh] lg:grid-cols-2">
+          <div className="relative flex min-h-[min(100svh,920px)] flex-col items-center justify-center px-4 pb-8 pt-24 sm:px-8 lg:sticky lg:top-0 lg:h-screen lg:min-h-0">
+            <Link
+              to="/collections"
+              className="absolute left-4 top-[5.5rem] text-xs font-semibold uppercase tracking-[0.2em] text-cream-muted sm:left-8"
+            >
+              ← All paddles
+            </Link>
+            <button
+              type="button"
+              className="group relative flex max-h-[calc(100svh-10rem)] w-full flex-1 cursor-zoom-in items-center justify-center lg:max-h-[calc(100vh-6rem)]"
+              onClick={() => setFullscreenImage(true)}
+              aria-label="View full screen"
+            >
               <img
                 src={mainImageSrc}
                 alt={`${product.name} — ${colorway.name}`}
-                className="max-h-[min(62vh,580px)] w-full object-contain drop-shadow-[0_24px_48px_rgba(0,0,0,0.12)]"
+                className="max-h-[calc(100svh-11rem)] w-full max-w-[min(100%,42rem)] object-contain drop-shadow-[0_24px_48px_rgba(0,0,0,0.1)] lg:max-h-[calc(100vh-7rem)] lg:max-w-[min(92vw,36rem)]"
                 fetchPriority="high"
               />
-            </div>
+              <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white opacity-0 transition group-hover:opacity-100">
+                <ZoomIn className="size-3.5" aria-hidden />
+                Full screen
+              </span>
+            </button>
             {galleryUrls.length > 1 ? (
-              <ul className="mt-4 flex flex-wrap gap-2" aria-label="Product images">
+              <ul className="mt-4 flex flex-wrap justify-center gap-2" aria-label="Product images">
                 {galleryUrls.map((url, i) => (
                   <li key={url}>
                     <button
                       type="button"
                       onClick={() => setGalleryIndex(i)}
-                      className={`overflow-hidden rounded-lg border-2 p-1 transition ${
-                        galleryIndex === i ? 'border-accent-coral' : 'border-transparent opacity-80 hover:opacity-100'
+                      className={`overflow-hidden rounded-lg border-2 bg-white/60 p-1 transition ${
+                        galleryIndex === i ? 'border-accent-coral' : 'border-black/10 opacity-80 hover:opacity-100'
                       }`}
                     >
                       <img src={url} alt="" className="size-16 object-contain sm:size-20" />
@@ -142,7 +155,7 @@ export function ProductPage() {
             ) : null}
           </div>
 
-          <div>
+          <div className="border-t border-black/8 bg-surface-cream px-4 py-10 sm:px-8 lg:border-t-0 lg:border-l lg:py-16 lg:pr-[max(1rem,5vw)]">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-cream-muted">
               {product.collectionSlugs.join(' · ')}
             </p>
@@ -213,7 +226,30 @@ export function ProductPage() {
             </div>
           </div>
         </div>
-      </SectionShell>
+      </section>
+
+      {fullscreenImage && mainImageSrc ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#e8e4dc] p-4 sm:p-8"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Product image full screen"
+        >
+          <button
+            type="button"
+            className="absolute right-4 top-4 rounded-full border border-black/15 bg-white p-2 shadow-md"
+            onClick={() => setFullscreenImage(false)}
+            aria-label="Close"
+          >
+            <X className="size-5" />
+          </button>
+          <img
+            src={mainImageSrc}
+            alt={`${product.name} — ${colorway.name}`}
+            className="max-h-full max-w-full object-contain"
+          />
+        </div>
+      ) : null}
 
       <SectionShell surface="cream" wide>
         <h2 className="text-2xl font-bold md:text-3xl">Description</h2>

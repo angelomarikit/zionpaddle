@@ -22,6 +22,9 @@ export type SiteSection = {
   published: boolean
   sortOrder: number
   updatedAt?: string
+  extra?: {
+    homeProductSlug?: string
+  }
 }
 
 export type SiteMediaKind = 'hero' | 'product_loop' | 'colorway_showcase' | 'macro' | 'poster'

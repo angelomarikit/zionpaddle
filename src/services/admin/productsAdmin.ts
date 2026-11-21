@@ -11,6 +11,8 @@ import {
   saveLocalProductPatch,
 } from '../cms/localCms'
 import { writeStockMap, readStockMap } from '../../data/mock/inventory'
+import { fetchSiteSections, saveSiteSection } from '../cms/siteContent'
+import { syncHomeHeroProductSlug } from '../../lib/catalog/homeHero'
 
 export type ColorwayDraft = {
   external_key: string
@@ -197,6 +199,15 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
       const { data, error } = await sb.from('products').insert(row).select('id').single()
       if (error) return { ok: false, error: friendlyAdminError(error.message), online: true }
       productId = (data as { id: string }).id
+    }
+
+    if (draft.hero) {
+      await sb.from('products').update({ hero: false, updated_at: new Date().toISOString() }).neq('slug', draft.slug)
+      try {
+        await syncHomeHeroProductSlug(draft.slug, fetchSiteSections, saveSiteSection)
+      } catch {
+        /* local / offline — hero slug still on product row */
+      }
     }
 
     try {

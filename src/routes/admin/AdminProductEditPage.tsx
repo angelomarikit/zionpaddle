@@ -87,6 +87,7 @@ export function AdminProductEditPage() {
     void queryClient.invalidateQueries({ queryKey: ['admin', 'product', resolvedSlug] })
     void queryClient.invalidateQueries({ queryKey: ['catalog', 'products'] })
     void queryClient.invalidateQueries({ queryKey: ['catalog', 'collections'] })
+    void queryClient.invalidateQueries({ queryKey: ['cms', 'sections'] })
     if (isNew) navigate(`/admin/products/${resolvedSlug}`, { replace: true })
     else setDraft(payload)
   }
@@ -105,6 +106,7 @@ export function AdminProductEditPage() {
     void queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
     void queryClient.invalidateQueries({ queryKey: ['catalog', 'products'] })
     void queryClient.invalidateQueries({ queryKey: ['catalog', 'collections'] })
+    void queryClient.invalidateQueries({ queryKey: ['cms', 'sections'] })
     navigate('/admin/products', { replace: true })
   }
 
@@ -585,8 +587,11 @@ export function AdminProductEditPage() {
             </p>
             <label className="mt-3 flex items-center gap-2 text-sm">
               <input type="checkbox" checked={draft.hero} onChange={(e) => setDraft({ ...draft, hero: e.target.checked })} />
-              Feature on home
+              Homepage hero (main paddle on the home page)
             </label>
+            <p className="mt-1 text-xs text-admin-muted">
+              Only one product at a time. Saving turns off hero on other products. Or pick a product under Website content → Home hero.
+            </p>
           </AdminCard>
 
           <button

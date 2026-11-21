@@ -1,5 +1,7 @@
 import { HeroStage } from '../components/tempo/HeroStage'
-import { flagshipProduct } from '../data/mock/flagship'
+import { resolveHomeHeroProduct } from '../lib/catalog/homeHero'
+import { useCatalog } from '../hooks/useCatalog'
+import { useSiteContent } from '../hooks/useSiteContent'
 import {
   BestSellersSection,
   BlogEditorialSection,
@@ -14,10 +16,15 @@ import {
 } from '../components/home/HomeSections'
 
 export function HomePage() {
+  const { products } = useCatalog()
+  const { sections } = useSiteContent()
+  const heroSection = sections.find((s) => s.sectionKey === 'hero')
+  const heroProduct = resolveHomeHeroProduct(products, heroSection)
+
   return (
     <>
       <HeroStage
-        product={flagshipProduct}
+        product={heroProduct}
         onCta={() => {
           const el = document.getElementById('size')
           el?.scrollIntoView({ behavior: 'smooth' })

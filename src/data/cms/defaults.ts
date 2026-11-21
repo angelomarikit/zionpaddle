@@ -1,4 +1,5 @@
 import type { SitePage, SiteSection } from '../../types/siteCms'
+import { flagshipProduct } from '../mock/flagship'
 import { dayoSiteMedia } from '../media/dayoMedia'
 
 export const defaultSitePages: SitePage[] = [
@@ -45,6 +46,7 @@ export const defaultSiteSections: SiteSection[] = [
     altText: dayoSiteMedia.hero.alt,
     published: true,
     sortOrder: 10,
+    extra: { homeProductSlug: flagshipProduct.slug },
   },
   {
     sectionKey: 'editorial',

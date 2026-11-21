@@ -19,6 +19,7 @@ export function useSiteContent() {
   const siteMedia = sectionToSiteMedia(sections)
   const editorial = sections.find((s) => s.sectionKey === 'editorial')
   const announcement = sections.find((s) => s.sectionKey === 'announcement')
+  const heroSection = sections.find((s) => s.sectionKey === 'hero')
 
   return {
     sections,
@@ -26,6 +27,7 @@ export function useSiteContent() {
     siteMedia,
     editorial,
     announcement,
+    heroSection,
     store: sectionsQuery.data?.store ?? 'local',
     isLoading: sectionsQuery.isLoading || pagesQuery.isLoading,
   }

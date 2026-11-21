@@ -1,11 +1,12 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import type { Colorway, Product } from '../../types/commerce'
 import { formatPhp } from '../../data/mock/products'
 import { Button } from '../ui/Button'
 import { springTransition } from '../../lib/motion'
 import { dayoColorwayAssets } from '../../data/media/dayoMedia'
+import { isDemoCatalogProduct, productHeroImage } from '../../lib/catalog/customProduct'
 import { ContentRail } from '../layout/ContentRail'
 
 type Props = {
@@ -23,8 +24,14 @@ const floatCycle = {
 export function HeroStage({ product, onColourChange, onCta }: Props) {
   const [active, setActive] = useState(product.colorways[0])
   const reduce = useReducedMotion()
+  const demo = isDemoCatalogProduct(product.slug)
+
+  useEffect(() => {
+    setActive(product.colorways[0])
+  }, [product.id, product.colorways])
+
   const activeIndex = product.colorways.findIndex((c) => c.id === active.id)
-  const assets = dayoColorwayAssets[active.id]
+  const assets = demo ? dayoColorwayAssets[active.id] : undefined
 
   const pick = (c: Colorway) => {
     setActive(c)
@@ -32,7 +39,9 @@ export function HeroStage({ product, onColourChange, onCta }: Props) {
   }
 
   /** Transparent cutouts only — no hero MP4 (videos carry a gray studio matte). */
-  const heroSrc = assets?.heroImage ?? assets?.poster ?? active.image
+  const heroSrc = demo
+    ? (assets?.heroImage ?? assets?.poster ?? active.image)
+    : productHeroImage(product, active)
 
   return (
     <section className="full-bleed relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-surface-ink pt-[calc(var(--dayo-announcement-h,0px)+5rem)]">
@@ -50,21 +59,23 @@ export function HeroStage({ product, onColourChange, onCta }: Props) {
               <span className="block text-white/80">{product.subtitle}</span>
             </h1>
             <p className="text-sm leading-relaxed text-ink-muted">{product.description.slice(0, 120)}…</p>
-            <Button variant="coral" onClick={onCta} className="w-fit">
-              Choose your grip
+            <Button variant="coral" to={`/products/${product.slug}`} className="w-fit" onClick={onCta}>
+              Shop {product.name}
               <ArrowRight className="size-4" aria-hidden />
             </Button>
           </div>
 
           <div className="order-1 flex flex-col items-center justify-center gap-2 lg:order-2 lg:gap-3">
-            <motion.p
-              aria-hidden
-              className="pointer-events-none w-full select-none text-center font-display text-[clamp(3.25rem,18vw,11rem)] font-extrabold italic leading-[0.92] tracking-tight"
-              animate={{ color: active.hex }}
-              transition={reduce ? { duration: 0 } : { duration: 0.35 }}
-            >
-              ZION
-            </motion.p>
+            {heroSrc ? (
+              <motion.p
+                aria-hidden
+                className="pointer-events-none w-full select-none text-center font-display text-[clamp(3.25rem,18vw,11rem)] font-extrabold italic leading-[0.92] tracking-tight"
+                animate={{ color: active.hex }}
+                transition={reduce ? { duration: 0 } : { duration: 0.35 }}
+              >
+                ZION
+              </motion.p>
+            ) : null}
 
             <AnimatePresence mode="wait">
               <motion.div
@@ -104,37 +115,43 @@ export function HeroStage({ product, onColourChange, onCta }: Props) {
                 {String(activeIndex + 1).padStart(2, '0')} /{' '}
                 {String(product.colorways.length).padStart(2, '0')}
               </p>
-              <p className="text-xs uppercase tracking-widest text-white/50">Colourways</p>
+              {demo && product.colorways.length > 1 ? (
+                <p className="text-xs uppercase tracking-widest text-white/50">Colourways</p>
+              ) : null}
               <p className="mt-1 text-3xl font-bold">{formatPhp(product.pricePhp)}</p>
             </div>
             <div className="flex flex-col gap-3 lg:items-end">
-              <div className="flex flex-wrap gap-2 lg:justify-end" role="radiogroup" aria-label="Colourways">
-                {product.colorways.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={active.id === c.id}
-                    className="size-11 rounded-full border-2 border-white/25 p-0.5 transition-transform hover:scale-105"
-                    style={{
-                      borderColor: active.id === c.id ? c.hex : undefined,
-                      boxShadow: active.id === c.id ? `0 0 0 1px ${c.hex}` : undefined,
-                    }}
-                    onClick={() => pick(c)}
-                  >
-                    <span
-                      className="block size-full rounded-full"
-                      style={{
-                        background: c.voltHex
-                          ? `linear-gradient(135deg, ${c.hex} 50%, ${c.voltHex} 50%)`
-                          : c.hex,
-                      }}
-                    />
-                    <span className="sr-only">{c.name}</span>
-                  </button>
-                ))}
-              </div>
-              <p className="font-mono text-xs uppercase tracking-widest text-white/70">{active.name}</p>
+              {demo && product.colorways.length > 1 ? (
+                <>
+                  <div className="flex flex-wrap gap-2 lg:justify-end" role="radiogroup" aria-label="Colourways">
+                    {product.colorways.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={active.id === c.id}
+                        className="size-11 rounded-full border-2 border-white/25 p-0.5 transition-transform hover:scale-105"
+                        style={{
+                          borderColor: active.id === c.id ? c.hex : undefined,
+                          boxShadow: active.id === c.id ? `0 0 0 1px ${c.hex}` : undefined,
+                        }}
+                        onClick={() => pick(c)}
+                      >
+                        <span
+                          className="block size-full rounded-full"
+                          style={{
+                            background: c.voltHex
+                              ? `linear-gradient(135deg, ${c.hex} 50%, ${c.voltHex} 50%)`
+                              : c.hex,
+                          }}
+                        />
+                        <span className="sr-only">{c.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="font-mono text-xs uppercase tracking-widest text-white/70">{active.name}</p>
+                </>
+              ) : null}
             </div>
           </div>
         </div>

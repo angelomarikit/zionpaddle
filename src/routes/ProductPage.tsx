@@ -13,6 +13,7 @@ import { SectionShell } from '../components/tempo/SectionShell'
 import { Button } from '../components/ui/Button'
 import { useCart } from '../context/CartContext'
 import { dayoColorwayAssets } from '../data/media/dayoMedia'
+import { isDemoCatalogProduct, productHeroImage } from '../lib/catalog/customProduct'
 import { productPageGalleryUrls } from '../lib/catalog/productGallery'
 import type { Product } from '../types/commerce'
 
@@ -54,9 +55,12 @@ export function ProductPage() {
 
   const reviewMeta = useMemo(() => (slug ? getProductReviews(slug) : null), [slug])
 
-  const assets = colorway ? dayoColorwayAssets[colorway.id] : undefined
-  const heroSrc = colorway
-    ? (assets?.heroImage ?? assets?.poster ?? colorway.image)
+  const demo = product ? isDemoCatalogProduct(product.slug) : false
+  const assets = demo && colorway ? dayoColorwayAssets[colorway.id] : undefined
+  const heroSrc = product && colorway
+    ? demo
+      ? (assets?.heroImage ?? assets?.poster ?? colorway.image)
+      : productHeroImage(product, colorway)
     : ''
   const galleryUrls = useMemo(
     () => (product && heroSrc ? productPageGalleryUrls(product, heroSrc) : []),
@@ -142,8 +146,10 @@ export function ProductPage() {
               {product.collectionSlugs.join(' · ')}
             </p>
             <h1 className="mt-2 text-4xl font-bold md:text-5xl">{product.name}</h1>
-            <p className="mt-2 text-lg text-cream-muted">{colorway.name}</p>
-            <p className="mt-1 text-base italic text-cream-muted">{colorway.tagline}</p>
+            {!demo || colorway.id !== 'default' ? (
+              <p className="mt-2 text-lg text-cream-muted">{colorway.name}</p>
+            ) : null}
+            {colorway.tagline ? <p className="mt-1 text-base italic text-cream-muted">{colorway.tagline}</p> : null}
 
             {reviewMeta ? (
               <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
@@ -176,12 +182,12 @@ export function ProductPage() {
                   value={colorwayId}
                   onChange={setColorwayId}
                 />
-              ) : (
+              ) : demo ? (
                 <div>
                   <p className="font-mono text-xs uppercase tracking-widest opacity-60">Colour</p>
                   <p className="mt-2 text-sm font-semibold">{colorway.name}</p>
                 </div>
-              )}
+              ) : null}
               <VariantLab
                 gripSizes={product.gripSizes}
                 selectedGrip={gripId}

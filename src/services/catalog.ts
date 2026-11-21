@@ -1,4 +1,5 @@
 import type { Collection, Colorway, Product } from '../types/commerce'
+import { defaultDbColorways, defaultDbGripSizes } from '../lib/catalog/customProduct'
 import { parseGalleryImagesJson } from '../lib/catalog/productGallery'
 import { getSupabase, supabaseConfigured } from '../lib/supabase/client'
 import { products as mockProducts } from '../data/mock/products'
@@ -40,8 +41,12 @@ function mapProduct(row: DbProduct): Product {
       tagline: c.tagline,
       hex: c.hex,
       voltHex: c.volt_hex ?? undefined,
-      image: c.image_url ?? '/assets/dayo/01_graphite_volt.jpg',
+      image: c.image_url?.trim() || '',
     }))
+
+  const resolvedColorways = colorways.length
+    ? colorways.map((c) => ({ ...c, image: c.image || '/placeholders/collection-pro.svg' }))
+    : defaultDbColorways()
 
   return {
     id: row.slug,
@@ -51,13 +56,13 @@ function mapProduct(row: DbProduct): Product {
     description: row.description,
     pricePhp: row.price_php,
     compareAtPhp: row.compare_at_php ?? undefined,
-    collectionSlugs: row.collection_slugs,
+    collectionSlugs: row.collection_slugs ?? [],
     weightGrams: row.weight_grams,
     hero: row.hero,
-    colorways: colorways.length ? colorways : mockProducts[0].colorways,
-    gripSizes: row.grip_sizes.length ? row.grip_sizes : mockProducts[0].gripSizes,
-    specs: row.specs,
-    features: row.features.length ? row.features : mockProducts[0].features,
+    colorways: resolvedColorways,
+    gripSizes: row.grip_sizes?.length ? row.grip_sizes : defaultDbGripSizes(),
+    specs: row.specs ?? [],
+    features: row.features?.length ? row.features : [],
     images: parseGalleryImagesJson(row.gallery_images),
   }
 }

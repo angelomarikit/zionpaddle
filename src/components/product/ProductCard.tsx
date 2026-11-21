@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Product } from '../../types/commerce'
 import { formatPhp } from '../../data/mock/products'
 import { dayoColorwayAssets } from '../../data/media/dayoMedia'
+import { isDemoCatalogProduct, productHeroImage } from '../../lib/catalog/customProduct'
 import { ProductVideo } from '../media/ProductVideo'
 import { Button } from '../ui/Button'
 import { useCart } from '../../context/CartContext'
@@ -25,7 +26,8 @@ export function ProductCard({
   imageFill = true,
   showCommerceActions = false,
 }: Props) {
-  const colorways = product.colorways
+  const colorways = product.colorways.filter((c) => c.id !== 'default' || product.colorways.length === 1)
+  const showSwatches = isDemoCatalogProduct(product.slug) && colorways.length > 1
   const [colorwayId, setColorwayId] = useState(product.colorways[0]?.id ?? '')
 
   useEffect(() => {
@@ -38,10 +40,11 @@ export function ProductCard({
   const reduce = useReducedMotion()
   const { addLine } = useCart()
 
-  const assets = colorway ? dayoColorwayAssets[colorway.id] : undefined
-  const cutout = assets?.heroImage ?? assets?.poster
-  const poster = cutout ?? colorway?.image ?? ''
-  const hasCutout = Boolean(cutout)
+  const demo = isDemoCatalogProduct(product.slug)
+  const assets = demo && colorway ? dayoColorwayAssets[colorway.id] : undefined
+  const cutout = demo ? (assets?.heroImage ?? assets?.poster) : undefined
+  const poster = cutout ?? (colorway ? productHeroImage(product, colorway) : '')
+  const hasCutout = Boolean(demo && cutout)
   const text = surface === 'ink' ? 'text-white' : 'text-surface-ink'
   const muted = surface === 'ink' ? 'text-white/60' : 'text-cream-muted'
   const frameBg = surface === 'ink' ? 'bg-surface-ink' : 'bg-surface-cream'
@@ -83,7 +86,9 @@ export function ProductCard({
           <ProductVideo
             poster={poster}
             videoSrc={
-              allowHoverVideo ? assets?.video ?? dayoColorwayAssets[colorway?.id ?? '']?.video : undefined
+              allowHoverVideo && demo
+                ? assets?.video ?? dayoColorwayAssets[colorway?.id ?? '']?.video
+                : undefined
             }
             alt={`${product.name} — ${colorway?.name ?? ''}`}
             className={`size-full bg-transparent transition-transform duration-500 group-hover:scale-[1.03] ${
@@ -95,7 +100,7 @@ export function ProductCard({
         </div>
         <div className={`space-y-1.5 pt-4 ${surface === 'ink' ? '' : 'bg-surface-cream'}`}>
           <p className="text-xs uppercase tracking-widest opacity-60">{product.name}</p>
-          <h3 className="text-xl font-bold">{colorway?.name ?? product.colorways[0]?.name}</h3>
+          <h3 className="text-xl font-bold">{demo ? (colorway?.name ?? product.name) : product.name}</h3>
           <p className={`text-sm ${muted}`}>{product.subtitle ?? colorway?.tagline}</p>
           <p className="text-lg font-semibold">{formatPhp(product.pricePhp)}</p>
         </div>
@@ -103,7 +108,7 @@ export function ProductCard({
 
       {showCommerceActions ? (
         <div className="mt-3 flex items-center gap-3 border-t border-black/10 pt-3">
-          {colorways.length > 1 ? (
+          {showSwatches && colorways.length > 1 ? (
             <div className="flex min-w-0 flex-1 flex-wrap gap-1.5" role="radiogroup" aria-label="Colour">
               {colorways.map((c) => (
                 <button

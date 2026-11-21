@@ -14,22 +14,17 @@ type Sort = 'price-asc' | 'price-desc' | 'name'
 export function CollectionsPage() {
   const { products, collections } = useCatalog()
   const [sort, setSort] = useState<Sort>('name')
-  const [filter, setFilter] = useState<string>('all')
   const reduce = useReducedMotion()
   const { siteMedia } = useSiteContent()
   const hero = siteMedia.hero ?? dayoSiteMedia.hero
 
   const list = useMemo(() => {
-    let items = products
-    if (filter !== 'all') {
-      items = items.filter((p) => p.collectionSlugs.includes(filter))
-    }
-    return [...items].sort((a, b) => {
+    return [...products].sort((a, b) => {
       if (sort === 'price-asc') return a.pricePhp - b.pricePhp
       if (sort === 'price-desc') return b.pricePhp - a.pricePhp
       return a.name.localeCompare(b.name)
     })
-  }, [sort, filter, products])
+  }, [sort, products])
 
   return (
     <>
@@ -50,28 +45,16 @@ export function CollectionsPage() {
             Paddles for every line.
           </h1>
           <p className="mt-4 max-w-xl text-ink-muted">
-            Full catalog in PHP. Tempo Pro ships with five colorways and Higgsfield product loops on the flagship.
+            Every live paddle in the catalog — new admin products appear here automatically.
           </p>
         </ContentRail>
       </section>
 
       <SectionShell surface="cream" compact className="!pt-8">
-        <div className="mb-8 flex flex-wrap gap-4">
-          <label className="text-sm font-medium">
-            Collection
-            <select
-              className="ml-2 rounded border border-black/20 bg-white px-2 py-1"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            >
-              <option value="all">All</option>
-              {collections.map((c) => (
-                <option key={c.id} value={c.slug}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="mb-8 flex flex-wrap items-center gap-4">
+          <p className="text-sm text-cream-muted">
+            <span className="font-semibold text-surface-ink">{list.length}</span> products in the shop
+          </p>
           <label className="text-sm font-medium">
             Sort
             <select

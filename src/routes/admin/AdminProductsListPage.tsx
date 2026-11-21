@@ -1,10 +1,14 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { formatPhp } from '../../data/mock/products'
 import { listStaffProducts } from '../../services/admin/productsAdmin'
+import { AdminConfirmModal } from '../../components/admin/AdminConfirmModal'
 import { AdminCard, AdminPage } from '../../components/admin/AdminShell'
 
 export function AdminProductsListPage() {
+  const navigate = useNavigate()
+  const [addModalOpen, setAddModalOpen] = useState(false)
   const { data, isLoading } = useQuery({ queryKey: ['admin', 'products'], queryFn: listStaffProducts })
 
   if (isLoading) return <p className="text-sm text-admin-muted">Loading products…</p>
@@ -15,12 +19,13 @@ export function AdminProductsListPage() {
     <AdminPage
       title="Products"
       actions={
-        <Link
-          to="/admin/products/new"
+        <button
+          type="button"
           className="rounded-lg bg-admin-gold px-4 py-2 text-sm font-semibold text-white hover:bg-black"
+          onClick={() => setAddModalOpen(true)}
         >
           Add product
-        </Link>
+        </button>
       }
     >
       <AdminCard className="overflow-hidden">
@@ -58,6 +63,19 @@ export function AdminProductsListPage() {
           </tbody>
         </table>
       </AdminCard>
+
+      <AdminConfirmModal
+        open={addModalOpen}
+        title="Add a new product"
+        description="You’ll set the name, photos, price, and whether it’s live on the shop or saved as a draft."
+        confirmLabel="Continue"
+        cancelLabel="Cancel"
+        onCancel={() => setAddModalOpen(false)}
+        onConfirm={() => {
+          setAddModalOpen(false)
+          navigate('/admin/products/new')
+        }}
+      />
     </AdminPage>
   )
 }

@@ -12,6 +12,7 @@ import {
 import { listStaffCollections } from '../../services/admin/collectionsAdmin'
 import { uploadStoreImage } from '../../services/admin/mediaUpload'
 import { friendlyAdminError } from '../../lib/admin/messages'
+import { AdminConfirmModal } from '../../components/admin/AdminConfirmModal'
 import { AdminCard, AdminPage, adminField, adminLabel } from '../../components/admin/AdminShell'
 
 export function AdminProductEditPage() {
@@ -25,6 +26,8 @@ export function AdminProductEditPage() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<string>()
   const [deleting, setDeleting] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
   const { data: collections } = useQuery({ queryKey: ['admin', 'collections'], queryFn: listStaffCollections })
 
@@ -42,9 +45,13 @@ export function AdminProductEditPage() {
     if (isNew) setDraft(emptyProductDraft())
   }, [isNew])
 
-  const save = async () => {
+  const save = async (skipCreateConfirm = false) => {
     if (!draft.name.trim()) {
       setError('Please enter a product name.')
+      return
+    }
+    if (isNew && !skipCreateConfirm) {
+      setCreateModalOpen(true)
       return
     }
     const resolvedSlug = (isNew ? slugify(draft.name) : draft.slug.trim() || slugify(draft.name)) || slugify(draft.name)
@@ -84,11 +91,8 @@ export function AdminProductEditPage() {
 
   const removeProduct = async () => {
     if (isNew || !draft.slug) return
-    const ok = window.confirm(
-      `Delete “${draft.name}”? This removes it from your store. Past orders that included this product are kept.`,
-    )
-    if (!ok) return
     setDeleting(true)
+    setDeleteModalOpen(false)
     setError(undefined)
     const result = await deleteStaffProduct(draft.slug)
     setDeleting(false)
@@ -177,7 +181,7 @@ export function AdminProductEditPage() {
             <button
               type="button"
               disabled={deleting || saving}
-              onClick={() => void removeProduct()}
+              onClick={() => setDeleteModalOpen(true)}
               className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
             >
               {deleting ? 'Deleting…' : 'Delete product'}
@@ -592,6 +596,36 @@ export function AdminProductEditPage() {
           </button>
         </div>
       </div>
+
+      <AdminConfirmModal
+        open={deleteModalOpen}
+        title={`Delete “${draft.name || 'this product'}”?`}
+        description="This removes the product from your store and shop. Orders that already included it are kept for your records."
+        confirmLabel="Delete product"
+        cancelLabel="Keep product"
+        variant="danger"
+        busy={deleting}
+        onCancel={() => setDeleteModalOpen(false)}
+        onConfirm={() => void removeProduct()}
+      />
+
+      <AdminConfirmModal
+        open={createModalOpen}
+        title="Add this product to your store?"
+        description={
+          draft.published
+            ? `“${draft.name.trim()}” will be saved and shown live on the shop. You can switch to Draft later from the status menu.`
+            : `“${draft.name.trim()}” will be saved as a draft and hidden from the shop until you set it to Live on store.`
+        }
+        confirmLabel={draft.published ? 'Save & go live' : 'Save as draft'}
+        cancelLabel="Go back"
+        busy={saving}
+        onCancel={() => setCreateModalOpen(false)}
+        onConfirm={() => {
+          setCreateModalOpen(false)
+          void save(true)
+        }}
+      />
     </AdminPage>
   )
 }

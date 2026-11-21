@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-11-20",
+  "generator": "Higgsfield seedance_2_0 via MCP",
+  "references": [
+    "01_graphite_volt.jpg",
+    "02_signal_orange.png",
+    "03_volt_lime.jpg",
+    "04_cobalt_rush.jpg",
+    "05_lavender_coral.jpg"
+  ],
+  "videos": {
+    "hero-graphite-volt.mp4": { "jobId": "0b7739b5-ff71-44fa-ad99-49f6b7589c6c", "section": "home.hero" },
+    "colorway-showcase.mp4": { "jobId": "05c4e829-f41c-45bb-81bf-65316dd96d64", "section": "home.colorways" },
+    "product-graphite-volt.mp4": { "jobId": "d978ecf6-1006-4a62-9a81-a881cba9e985", "colorway": "graphite-volt" },
+    "product-signal-orange.mp4": { "jobId": "ff5f24af-7430-4d3c-9796-381363bd67c3", "colorway": "signal-orange" },
+    "product-volt-lime.mp4": { "jobId": "514150b2-ec48-4fea-b36a-cb611aca6acd", "colorway": "volt-lime" },
+    "product-cobalt-rush.mp4": { "jobId": "a3ebccdf-4544-425b-9348-d082399b6870", "colorway": "cobalt-rush" },
+    "product-lavender-coral.mp4": { "jobId": "35fe9429-f5cd-4711-bb03-dd1a28d1cc94", "colorway": "lavender-coral" },
+    "macro-graphite-volt.mp4": { "jobId": "38919689-3219-4d70-b929-7b7f07f74c07", "section": "product.macro" }
+  }
+}

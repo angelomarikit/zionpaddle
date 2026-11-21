@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Archivo", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  /* Storefront — platinum & gold */
+  --color-surface-ink: #1a1816;
+  --color-surface-cream: #f4f2ed;
+  --color-surface-box: #e6e4de;
+  --color-accent-coral: #c9a227;
+  --color-accent-volt: #e8d48b;
+  --color-accent-court: #6b5d48;
+  --color-ink-muted: rgba(244, 242, 237, 0.78);
+  --color-cream-muted: rgba(26, 24, 22, 0.58);
+
+  /* Platinum */
+  --color-platinum-50: #faf9fb;
+  --color-platinum-100: #f0f0f4;
+  --color-platinum-200: #e4e5ea;
+  --color-platinum-300: #d2d4dc;
+  --color-platinum-400: #b8bac4;
+
+  /* Gold */
+  --color-gold-400: #e4d4a8;
+  --color-gold-500: #c9a227;
+  --color-gold-600: #a8871d;
+  --color-gold-700: #8a6f18;
+  --color-gold-800: #6b5714;
+
+  /* Admin — semantic (platinum UI + gold accents) */
+  --color-admin-canvas: #ececf0;
+  --color-admin-sidebar: #e0e1e8;
+  --color-admin-card: #faf9fb;
+  --color-admin-border: #d2d4dc;
+  --color-admin-ink: #2a2824;
+  --color-admin-ink-deep: #1a1916;
+  --color-admin-muted: #65635c;
+  --color-admin-subtle: #f5f4f7;
+  --color-admin-highlight: #faf8f0;
+  --color-admin-link: #9a7b1a;
+  --color-admin-gold: #c9a227;
+  --color-admin-gold-dark: #a8871d;
+  --color-admin-gold-light: #e4d4a8;
+  --color-admin-input: #c5c7d0;
+  --color-admin-chrome: #b8b9c2;
+  --color-admin-success: #3d6b4a;
+  --color-admin-success-bg: #e8f0ea;
+
+  --breakpoint-tempo-tablet: 810px;
+  --breakpoint-tempo-desktop: 1200px;
+}
+
+@layer base {
+  :root {
+    --dayo-gutter: clamp(1.25rem, 4vw, 2.5rem);
+    --dayo-content-max: min(calc(100% - 2 * var(--dayo-gutter)), 1320px);
+    --dayo-content-wide: min(calc(100% - 2 * var(--dayo-gutter)), 1560px);
+    --dayo-hero-product: clamp(280px, 38vw, 520px);
+    --admin-chart-primary: #c9a227;
+    --admin-chart-secondary: #e4d4a8;
+  }
+
+  .content-rail {
+    margin-inline: auto;
+    padding-inline: var(--dayo-gutter);
+    max-width: var(--dayo-content-max);
+  }
+
+  .content-rail--wide {
+    max-width: var(--dayo-content-wide);
+  }
+
+  .full-bleed {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: clip;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    @apply bg-surface-ink font-display text-white antialiased;
+  }
+
+  .announcement-marquee-track {
+    animation: dayo-announcement-scroll 32s linear infinite;
+  }
+
+  @keyframes dayo-announcement-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent-volt;
+  }
+
+}

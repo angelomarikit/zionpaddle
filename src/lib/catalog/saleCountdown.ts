@@ -57,14 +57,41 @@ export function formatSaleCountdownClock(ms: number): string {
   return `${pad(m)}:${pad(s)}`
 }
 
-export function saleCountdownOneLine(headline: string, remainingMs: number): {
-  clock: string
-  suffix: string
-} {
+export function saleCountdownOneLine(remainingMs: number): { clock: string; suffix: string } {
   const clock =
     remainingMs >= 86_400_000 ? formatSaleCountdownRemaining(remainingMs) : formatSaleCountdownClock(remainingMs)
   return {
     clock,
     suffix: 'left before the sale ends',
   }
+}
+
+const rollingEndStorageKey = (slug: string) => `zion-sale-countdown-end:${slug}`
+
+/** Keeps a rolling countdown ticking instead of restarting every parent render. */
+export function resolveRollingCountdownEndMs(slug: string, rollingMinutes: number, reset = false): number {
+  const cycleMs = Math.max(1, rollingMinutes) * 60_000
+  const key = rollingEndStorageKey(slug)
+  if (!reset) {
+    try {
+      const raw = sessionStorage.getItem(key)
+      if (raw) {
+        const parsed = Number(raw)
+        if (Number.isFinite(parsed) && parsed > Date.now()) return parsed
+      }
+    } catch {
+      /* private mode */
+    }
+  }
+  const end = Date.now() + cycleMs
+  try {
+    sessionStorage.setItem(key, String(end))
+  } catch {
+    /* private mode */
+  }
+  return end
+}
+
+export function bumpRollingCountdownEndMs(slug: string, rollingMinutes: number): number {
+  return resolveRollingCountdownEndMs(slug, rollingMinutes, true)
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, Star, X, ZoomIn } from 'lucide-react'
+import { Star, X, ZoomIn } from 'lucide-react'
 import { formatPhp } from '../data/mock/products'
 import { findProductBySlug, useCatalog } from '../hooks/useCatalog'
 import { getProductReviews } from '../data/mock/reviews'
@@ -222,14 +222,19 @@ export function ProductPage() {
             <div className="sticky bottom-4 z-40 mt-6 lg:static">
               <Button
                 variant="coral"
-                className="w-full lg:w-auto"
+                className="w-full uppercase tracking-[0.12em] lg:w-auto"
                 onClick={addToBag}
                 disabled={grip.soldOut}
               >
-                Add to bag — {formatPhp(product.pricePhp)}
-                <ArrowRight className="size-4" />
+                Add to bag
               </Button>
             </div>
+            <img
+              src="/assets/zion/trust-badges.jpg"
+              alt="Legit seller, secure checkout, and data privacy"
+              className="mx-auto mt-4 w-full max-w-md"
+              loading="lazy"
+            />
 
             <div className="mt-8 border-t border-black/8 pt-6">
               <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-cream-muted">Description</h2>

@@ -10,7 +10,6 @@ import {
   removeLocalProductPatch,
   saveLocalProductPatch,
 } from '../cms/localCms'
-import { ensureCatalogInDatabase } from './catalogSeed'
 import { writeStockMap, readStockMap } from '../../data/mock/inventory'
 
 export type ColorwayDraft = {
@@ -65,7 +64,6 @@ function mapRowToDraft(row: Record<string, unknown>, colorways: ColorwayDraft[],
 export async function listStaffProducts(): Promise<{ products: ProductDraft[]; online: boolean }> {
   const sb = getSupabase()
   if (sb && supabaseConfigured) {
-    await ensureCatalogInDatabase()
     const { data, error } = await sb
       .from('products')
       .select('*, product_colorways(*)')
@@ -132,6 +130,35 @@ export async function listStaffProducts(): Promise<{ products: ProductDraft[]; o
 }
 
 export async function getStaffProduct(slug: string): Promise<ProductDraft | undefined> {
+  const sb = getSupabase()
+  if (sb && supabaseConfigured) {
+    const { data: row, error } = await sb
+      .from('products')
+      .select('*, product_colorways(*)')
+      .eq('slug', slug)
+      .maybeSingle()
+    if (!error && row) {
+      const { data: stock } = await sb
+        .from('product_stock')
+        .select('quantity_on_hand')
+        .eq('product_slug', slug)
+        .maybeSingle()
+      const cws = ((row.product_colorways as Record<string, unknown>[]) ?? [])
+        .sort((a, b) => (a.sort_order as number) - (b.sort_order as number))
+        .map((c) => ({
+          external_key: c.external_key as string,
+          slug: c.slug as string,
+          name: c.name as string,
+          tagline: c.tagline as string,
+          hex: c.hex as string,
+          volt_hex: (c.volt_hex as string) ?? undefined,
+          image_url: (c.image_url as string) ?? undefined,
+          sort_order: c.sort_order as number,
+        }))
+      return mapRowToDraft(row as Record<string, unknown>, cws, (stock as { quantity_on_hand: number } | null)?.quantity_on_hand ?? 0)
+    }
+  }
+
   const { products } = await listStaffProducts()
   return products.find((p) => p.slug === slug)
 }
@@ -172,30 +199,41 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
       productId = (data as { id: string }).id
     }
 
-    if (productId) {
-      await sb.from('product_colorways').delete().eq('product_id', productId)
-      if (draft.colorways.length) {
-        await sb.from('product_colorways').insert(
-          draft.colorways.map((c, i) => ({
-            product_id: productId,
-            external_key: c.external_key,
-            slug: c.slug,
-            name: c.name,
-            tagline: c.tagline,
-            hex: c.hex,
-            volt_hex: c.volt_hex ?? null,
-            image_url: c.image_url ?? null,
-            sort_order: c.sort_order ?? i,
-          })),
-        )
-      }
+    try {
+      await Promise.all([
+        (async () => {
+          const { error: stockError } = await sb.from('product_stock').upsert({
+            product_slug: draft.slug,
+            quantity_on_hand: draft.quantity_on_hand,
+            updated_at: new Date().toISOString(),
+          })
+          if (stockError) throw stockError
+        })(),
+        (async () => {
+          if (!productId) return
+          const { error: delError } = await sb.from('product_colorways').delete().eq('product_id', productId)
+          if (delError) throw delError
+          if (!draft.colorways.length) return
+          const { error: cwError } = await sb.from('product_colorways').insert(
+            draft.colorways.map((c, i) => ({
+              product_id: productId,
+              external_key: c.external_key,
+              slug: c.slug,
+              name: c.name,
+              tagline: c.tagline,
+              hex: c.hex,
+              volt_hex: c.volt_hex ?? null,
+              image_url: c.image_url ?? null,
+              sort_order: c.sort_order ?? i,
+            })),
+          )
+          if (cwError) throw cwError
+        })(),
+      ])
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return { ok: false, error: friendlyAdminError(message), online: true }
     }
-
-    await sb.from('product_stock').upsert({
-      product_slug: draft.slug,
-      quantity_on_hand: draft.quantity_on_hand,
-      updated_at: new Date().toISOString(),
-    })
 
     saveLocalProductPatch({
       slug: draft.slug,

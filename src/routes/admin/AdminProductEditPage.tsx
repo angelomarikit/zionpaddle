@@ -83,8 +83,10 @@ export function AdminProductEditPage() {
           : 'Saved as draft — switch status to Live on store when you are ready.'
         : 'Saved on this device.',
     )
-    void queryClient.invalidateQueries({ queryKey: ['admin'] })
-    void queryClient.invalidateQueries({ queryKey: ['catalog'], refetchType: 'active' })
+    void queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+    void queryClient.invalidateQueries({ queryKey: ['admin', 'product', resolvedSlug] })
+    void queryClient.invalidateQueries({ queryKey: ['catalog', 'products'] })
+    void queryClient.invalidateQueries({ queryKey: ['catalog', 'collections'] })
     if (isNew) navigate(`/admin/products/${resolvedSlug}`, { replace: true })
     else setDraft(payload)
   }
@@ -100,8 +102,9 @@ export function AdminProductEditPage() {
       setError(friendlyAdminError(result.error))
       return
     }
-    void queryClient.invalidateQueries({ queryKey: ['admin'] })
-    void queryClient.invalidateQueries({ queryKey: ['catalog'] })
+    void queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+    void queryClient.invalidateQueries({ queryKey: ['catalog', 'products'] })
+    void queryClient.invalidateQueries({ queryKey: ['catalog', 'collections'] })
     navigate('/admin/products', { replace: true })
   }
 

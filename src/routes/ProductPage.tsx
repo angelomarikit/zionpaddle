@@ -186,7 +186,7 @@ export function ProductPage() {
               <p className="text-sm text-cream-muted line-through">{formatPhp(product.compareAtPhp)}</p>
             ) : null}
 
-            <div className="mt-8 space-y-8">
+            <div className="mt-6 space-y-5">
               {product.colorways.length > 1 ? (
                 <VariantSwatches
                   colorways={product.colorways}
@@ -210,7 +210,7 @@ export function ProductPage() {
               />
             </div>
 
-            <div className="sticky bottom-4 z-40 mt-8 lg:static">
+            <div className="sticky bottom-4 z-40 mt-6 lg:static">
               <Button
                 variant="coral"
                 className="w-full lg:w-auto"
@@ -220,6 +220,15 @@ export function ProductPage() {
                 Add to bag — {formatPhp(product.pricePhp)}
                 <ArrowRight className="size-4" />
               </Button>
+            </div>
+
+            <div className="mt-8 border-t border-black/8 pt-6">
+              <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-cream-muted">Description</h2>
+              <div className="mt-3 space-y-3 text-sm leading-relaxed text-cream-muted">
+                {detailParagraphs.map((para) => (
+                  <p key={para.slice(0, 24)}>{para}</p>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -247,15 +256,6 @@ export function ProductPage() {
           />
         </div>
       ) : null}
-
-      <SectionShell surface="cream" wide>
-        <h2 className="text-2xl font-bold md:text-3xl">Description</h2>
-        <div className="mt-6 max-w-3xl space-y-4 text-base leading-relaxed text-cream-muted">
-          {detailParagraphs.map((para) => (
-            <p key={para.slice(0, 24)}>{para}</p>
-          ))}
-        </div>
-      </SectionShell>
 
       {reviewMeta ? (
         <SectionShell surface="cream" wide>

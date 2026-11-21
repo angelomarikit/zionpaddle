@@ -25,13 +25,13 @@ export function VariantLab({
   const reduce = useReducedMotion()
 
   return (
-    <div className="space-y-8">
-      <div className="flex gap-2">
+    <div className="space-y-4">
+      <div className="flex gap-1.5">
         {(['in', 'cm'] as const).map((u) => (
           <button
             key={u}
             type="button"
-            className={`rounded-sm px-4 py-2 font-mono text-xs uppercase ${
+            className={`rounded-sm px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide ${
               unit === u ? 'bg-surface-ink text-white' : 'bg-black/10'
             }`}
             onClick={() => onUnitChange(u)}
@@ -41,7 +41,7 @@ export function VariantLab({
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
         {gripSizes.map((g) => {
           const selected = selectedGrip === g.id
           const disabled = g.soldOut
@@ -51,22 +51,22 @@ export function VariantLab({
               type="button"
               disabled={disabled}
               whileTap={reduce ? undefined : { scale: 0.98 }}
-              className={`rounded-sm border px-3 py-4 text-left font-mono text-sm ${
+              className={`rounded-sm border px-2 py-2 text-left font-mono text-xs ${
                 disabled ? 'cursor-not-allowed opacity-40' : ''
               } ${selected ? 'border-accent-coral bg-white' : 'border-black/15 bg-white/50'}`}
               onClick={() => onGripChange(g.id)}
             >
-              <span className="block font-semibold">{g.label}</span>
-              <span className="text-xs opacity-60">
+              <span className="block text-xs font-semibold">{g.label}</span>
+              <span className="text-[10px] opacity-60">
                 {unit === 'cm' ? g.circumferenceCm : g.label}
               </span>
-              {disabled ? <span className="text-xs">Sold out</span> : null}
+              {disabled ? <span className="text-[10px]">Sold out</span> : null}
             </motion.button>
           )
         })}
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-3 gap-1.5">
         {(
           [
             ['narrow', 'Narrow grip', 'Half down'],
@@ -77,13 +77,13 @@ export function VariantLab({
           <button
             key={id}
             type="button"
-            className={`flex-1 rounded-sm border px-4 py-3 text-left min-w-[140px] ${
-              fit === id ? 'border-accent-court bg-accent-court/10' : 'border-black/10'
+            className={`rounded-sm border px-2 py-2 text-left ${
+              fit === id ? 'border-accent-court bg-accent-court/10' : 'border-black/10 bg-white/40'
             }`}
             onClick={() => onFitChange(id)}
           >
-            <span className="block text-sm font-semibold">{title}</span>
-            <span className="text-xs opacity-60">{hint}</span>
+            <span className="block text-xs font-semibold leading-tight">{title}</span>
+            <span className="text-[10px] opacity-60">{hint}</span>
           </button>
         ))}
       </div>

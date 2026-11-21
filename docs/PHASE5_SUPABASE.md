@@ -14,6 +14,7 @@
 10. `supabase/migrations/015_orders_shipment_tracking.sql` (`shipment_tracking` — cleared when unfulfilled)
 11. `supabase/migrations/016_staff_permissions.sql` (`permissions`, `display_name`, admin profile policies)
 12. `supabase/migrations/017_admin_owner_profile.sql` (`admin@zion.com` owner bootstrap policy)
+13. `supabase/migrations/018_product_gallery_images.sql` (`products.gallery_images` JSON array for PDP gallery)
 
 ## Env
 
@@ -31,7 +32,7 @@ VITE_ENABLE_ADMIN=true
    - Email: `admin@zion.com`  
    - Password: your choice (share only with owners)  
    - Confirm email if your project requires it
-2. Run migrations through `017_admin_owner_profile.sql`.
+2. Run migrations through `018_product_gallery_images.sql`.
 3. Sign in at `/admin/login` with `admin@zion.com`.  
    The app creates or upgrades the `profiles` row to **admin** on first sign-in.
 

@@ -13,6 +13,7 @@ import { SectionShell } from '../components/tempo/SectionShell'
 import { Button } from '../components/ui/Button'
 import { useCart } from '../context/CartContext'
 import { dayoColorwayAssets } from '../data/media/dayoMedia'
+import { productPageGalleryUrls } from '../lib/catalog/productGallery'
 import type { Product } from '../types/commerce'
 
 function productDetailCopy(product: Product): string[] {
@@ -34,6 +35,7 @@ export function ProductPage() {
   const [gripId, setGripId] = useState('')
   const [unit, setUnit] = useState<'in' | 'cm'>('in')
   const [fit, setFit] = useState<'narrow' | 'true' | 'wide'>('true')
+  const [galleryIndex, setGalleryIndex] = useState(0)
 
   useEffect(() => {
     if (!product) return
@@ -52,6 +54,19 @@ export function ProductPage() {
 
   const reviewMeta = useMemo(() => (slug ? getProductReviews(slug) : null), [slug])
 
+  const assets = colorway ? dayoColorwayAssets[colorway.id] : undefined
+  const heroSrc = colorway
+    ? (assets?.heroImage ?? assets?.poster ?? colorway.image)
+    : ''
+  const galleryUrls = useMemo(
+    () => (product && heroSrc ? productPageGalleryUrls(product, heroSrc) : []),
+    [product, heroSrc],
+  )
+
+  useEffect(() => {
+    setGalleryIndex(0)
+  }, [heroSrc])
+
   if (catalogLoading) {
     return (
       <SectionShell surface="cream" className="pt-28">
@@ -62,8 +77,7 @@ export function ProductPage() {
 
   if (!product || !colorway || !grip) return <NotFoundPage />
 
-  const assets = dayoColorwayAssets[colorway.id]
-  const heroSrc = assets?.heroImage ?? assets?.poster ?? colorway.image
+  const mainImageSrc = galleryUrls[galleryIndex] ?? heroSrc
 
   const related = products
     .filter(
@@ -98,12 +112,29 @@ export function ProductPage() {
           <div className="lg:sticky lg:top-24 lg:self-start">
             <div className="relative flex min-h-[min(68vh,640px)] items-center justify-center overflow-hidden rounded-xl border border-black/8 bg-gradient-to-b from-[#f8f5ef] via-surface-cream to-[#ebe6de] p-6 sm:p-10">
               <img
-                src={heroSrc}
+                src={mainImageSrc}
                 alt={`${product.name} — ${colorway.name}`}
                 className="max-h-[min(62vh,580px)] w-full object-contain drop-shadow-[0_24px_48px_rgba(0,0,0,0.12)]"
                 fetchPriority="high"
               />
             </div>
+            {galleryUrls.length > 1 ? (
+              <ul className="mt-4 flex flex-wrap gap-2" aria-label="Product images">
+                {galleryUrls.map((url, i) => (
+                  <li key={url}>
+                    <button
+                      type="button"
+                      onClick={() => setGalleryIndex(i)}
+                      className={`overflow-hidden rounded-lg border-2 p-1 transition ${
+                        galleryIndex === i ? 'border-accent-coral' : 'border-transparent opacity-80 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={url} alt="" className="size-16 object-contain sm:size-20" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
 
           <div>

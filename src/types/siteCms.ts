@@ -49,6 +49,8 @@ export type CatalogProductPatch = {
   weightGrams?: number
   published?: boolean
   hero?: boolean
+  /** Additional product-page images (not the active colorway hero). */
+  galleryImages?: string[]
 }
 
 export type CatalogCollectionPatch = {

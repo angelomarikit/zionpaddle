@@ -2,7 +2,14 @@ import type { GripSize } from '../../types/commerce'
 import { getSupabase, supabaseConfigured } from '../../lib/supabase/client'
 import { friendlyAdminError } from '../../lib/admin/messages'
 import { products as mockProducts } from '../../data/mock/products'
-import { filterDeletedCatalogProducts, markProductDeleted, removeLocalProductPatch, saveLocalProductPatch } from '../cms/localCms'
+import { parseGalleryImagesJson } from '../../lib/catalog/productGallery'
+import {
+  filterDeletedCatalogProducts,
+  markProductDeleted,
+  readLocalProductPatches,
+  removeLocalProductPatch,
+  saveLocalProductPatch,
+} from '../cms/localCms'
 import { ensureCatalogInDatabase } from './catalogSeed'
 import { writeStockMap, readStockMap } from '../../data/mock/inventory'
 
@@ -31,6 +38,7 @@ export type ProductDraft = {
   grip_sizes: GripSize[]
   specs: { label: string; value: string }[]
   colorways: ColorwayDraft[]
+  gallery_images: string[]
   quantity_on_hand: number
 }
 
@@ -49,6 +57,7 @@ function mapRowToDraft(row: Record<string, unknown>, colorways: ColorwayDraft[],
     grip_sizes: (row.grip_sizes as GripSize[]) ?? [],
     specs: (row.specs as { label: string; value: string }[]) ?? [],
     colorways,
+    gallery_images: parseGalleryImagesJson(row.gallery_images),
     quantity_on_hand: qty,
   }
 }
@@ -90,6 +99,7 @@ export async function listStaffProducts(): Promise<{ products: ProductDraft[]; o
   }
 
   const stock = readStockMap()
+  const patches = readLocalProductPatches()
   return {
     online: false,
     products: filterDeletedCatalogProducts(mockProducts).map((p) => ({
@@ -115,6 +125,7 @@ export async function listStaffProducts(): Promise<{ products: ProductDraft[]; o
         image_url: c.image,
         sort_order: i,
       })),
+      gallery_images: patches.find((x) => x.slug === p.slug)?.galleryImages ?? p.images ?? [],
       quantity_on_hand: stock[p.slug] ?? 0,
     })),
   }
@@ -143,6 +154,7 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
       grip_sizes: draft.grip_sizes,
       specs: draft.specs,
       features: [],
+      gallery_images: draft.gallery_images,
       updated_at: new Date().toISOString(),
     }
     let productId = (existing as { id: string } | null)?.id
@@ -190,6 +202,7 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
       weightGrams: draft.weight_grams,
       published: draft.published,
       hero: draft.hero,
+      galleryImages: draft.gallery_images,
     })
     return { ok: true, online: true }
   }
@@ -207,6 +220,7 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
     weightGrams: draft.weight_grams,
     published: draft.published,
     hero: draft.hero,
+    galleryImages: draft.gallery_images,
   })
   return { ok: true, online: false }
 }
@@ -260,6 +274,7 @@ export function emptyProductDraft(): ProductDraft {
         sort_order: 0,
       },
     ],
+    gallery_images: [],
     quantity_on_hand: 0,
   }
 }

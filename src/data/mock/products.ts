@@ -70,7 +70,7 @@ function mk(
     compareAtPhp: extras?.compareAtPhp,
     collectionSlugs: [collection],
     weightGrams: weight,
-    images: [cw.image],
+    images: [],
     colorways: [cw],
     gripSizes: [
       { id: 'g4', label: '4¼ in', circumferenceCm: '10.8 cm' },

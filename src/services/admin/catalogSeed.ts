@@ -60,6 +60,7 @@ async function seedCatalogIfEmpty(): Promise<void> {
       specs: p.specs,
       features: p.features,
       grip_sizes: p.gripSizes,
+      gallery_images: p.images ?? [],
       updated_at: new Date().toISOString(),
     }
 

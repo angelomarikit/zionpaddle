@@ -89,6 +89,19 @@ export function AdminProductEditPage() {
 
   const collectionOptions = collections?.collections ?? []
 
+  const uploadGalleryImage = async (file: File) => {
+    const token = `gallery-${Date.now()}`
+    setUploading(token)
+    const path = `products/${draft.slug || 'new'}/gallery/${token}.${ext(file)}`
+    const result = await uploadStoreImage(file, path)
+    setUploading(undefined)
+    if (result.error || !result.url) {
+      setError(friendlyAdminError(result.error ?? 'Upload failed.'))
+      return
+    }
+    setDraft({ ...draft, gallery_images: [...draft.gallery_images, result.url] })
+  }
+
   const uploadColorwayImage = async (index: number, file: File) => {
     const key = draft.colorways[index]?.external_key ?? `color-${index}`
     setUploading(key)
@@ -216,6 +229,79 @@ export function AdminProductEditPage() {
                 />
               ))}
             </ul>
+          </AdminCard>
+
+          <AdminCard className="p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-semibold">More product images</p>
+              <label className="cursor-pointer rounded-lg border border-admin-input px-3 py-1.5 text-xs font-semibold">
+                {uploading?.startsWith('gallery-') ? 'Uploading…' : 'Upload image'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  disabled={Boolean(uploading)}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) void uploadGalleryImage(f)
+                    e.target.value = ''
+                  }}
+                />
+              </label>
+            </div>
+            <p className="mt-1 text-xs text-admin-muted">
+              Extra shots for the product page gallery. Color swatches above still control the main hero per color.
+            </p>
+            {draft.gallery_images.length === 0 ? (
+              <p className="mt-4 text-sm text-admin-muted">No extra images yet.</p>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {draft.gallery_images.map((url, i) => (
+                  <li key={url} className="flex items-center gap-3 rounded-lg border border-admin-border p-3">
+                    <img src={url} alt="" className="size-16 rounded-md border object-contain" />
+                    <span className="flex-1 truncate text-xs text-admin-muted">{url}</span>
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        className="rounded border border-admin-border px-2 py-1 text-xs disabled:opacity-40"
+                        disabled={i === 0}
+                        onClick={() => {
+                          const next = [...draft.gallery_images]
+                          ;[next[i - 1], next[i]] = [next[i]!, next[i - 1]!]
+                          setDraft({ ...draft, gallery_images: next })
+                        }}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded border border-admin-border px-2 py-1 text-xs disabled:opacity-40"
+                        disabled={i === draft.gallery_images.length - 1}
+                        onClick={() => {
+                          const next = [...draft.gallery_images]
+                          ;[next[i], next[i + 1]] = [next[i + 1]!, next[i]!]
+                          setDraft({ ...draft, gallery_images: next })
+                        }}
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded px-2 py-1 text-xs text-red-700"
+                        onClick={() =>
+                          setDraft({
+                            ...draft,
+                            gallery_images: draft.gallery_images.filter((_, j) => j !== i),
+                          })
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </AdminCard>
 
           <AdminCard className="p-5">

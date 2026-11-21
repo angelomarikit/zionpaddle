@@ -1,5 +1,5 @@
 import type { Product } from '../../types/commerce'
-import { dayoColorwayAssets } from '../media/dayoMedia'
+import { dayoColorwayAssets, heroGraphiteProduct } from '../media/dayoMedia'
 
 const img = (key: string) =>
   dayoColorwayAssets[key]?.heroImage ??
@@ -19,7 +19,7 @@ export const flagshipProduct: Product = {
   collectionSlugs: ['pro-series'],
   hero: true,
   weightGrams: 230,
-  images: [img('coral-volt')],
+  images: [img('signal-coral'), heroGraphiteProduct.onBlack],
   colorways: [
     {
       id: 'coral-volt',

@@ -122,6 +122,7 @@ export function applyProductPatches(products: Product[]): Product[] {
       compareAtPhp: patch.compareAtPhp === null ? undefined : (patch.compareAtPhp ?? p.compareAtPhp),
       weightGrams: patch.weightGrams ?? p.weightGrams,
       hero: patch.hero ?? p.hero,
+      images: patch.galleryImages ?? p.images,
     }
   })
 }

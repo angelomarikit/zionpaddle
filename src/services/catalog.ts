@@ -1,4 +1,5 @@
 import type { Collection, Colorway, Product } from '../types/commerce'
+import { parseGalleryImagesJson } from '../lib/catalog/productGallery'
 import { getSupabase, supabaseConfigured } from '../lib/supabase/client'
 import { products as mockProducts } from '../data/mock/products'
 
@@ -12,6 +13,7 @@ type DbProduct = {
   collection_slugs: string[]
   weight_grams: number
   hero: boolean
+  gallery_images?: unknown
   specs: { label: string; value: string }[]
   features: { index: string; title: string; body: string; image?: string }[]
   grip_sizes: { id: string; label: string; circumferenceCm: string; soldOut?: boolean }[]
@@ -55,7 +57,7 @@ function mapProduct(row: DbProduct): Product {
     gripSizes: row.grip_sizes.length ? row.grip_sizes : mockProducts[0].gripSizes,
     specs: row.specs,
     features: row.features.length ? row.features : mockProducts[0].features,
-    images: colorways[0]?.image ? [colorways[0].image] : [],
+    images: parseGalleryImagesJson(row.gallery_images),
   }
 }
 

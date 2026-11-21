@@ -110,41 +110,38 @@ export function ProductPage() {
 
   return (
     <>
-      <section className="full-bleed bg-gradient-to-b from-[#f8f5ef] via-surface-cream to-[#ebe6de] text-surface-ink">
-        <div className="grid lg:min-h-[100svh] lg:grid-cols-2">
-          <div className="relative flex min-h-[min(100svh,920px)] flex-col items-center justify-center px-4 pb-8 pt-24 sm:px-8 lg:sticky lg:top-0 lg:h-screen lg:min-h-0">
-            <Link
-              to="/collections"
-              className="absolute left-4 top-[5.5rem] text-xs font-semibold uppercase tracking-[0.2em] text-cream-muted sm:left-8"
-            >
-              ← All paddles
-            </Link>
+      <SectionShell surface="cream" className="pt-28" wide>
+        <Link to="/collections" className="text-xs font-semibold uppercase tracking-[0.2em] text-cream-muted">
+          ← All paddles
+        </Link>
+        <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-14">
+          <div className="lg:sticky lg:top-24 lg:self-start">
             <button
               type="button"
-              className="group relative flex max-h-[calc(100svh-10rem)] w-full flex-1 cursor-zoom-in items-center justify-center lg:max-h-[calc(100vh-6rem)]"
+              className="group relative flex w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-xl border border-black/8 bg-gradient-to-b from-[#f8f5ef] via-surface-cream to-[#ebe6de] p-5 sm:min-h-[min(56vh,520px)] sm:p-8"
               onClick={() => setFullscreenImage(true)}
-              aria-label="View full screen"
+              aria-label="Enlarge product image"
             >
               <img
                 src={mainImageSrc}
                 alt={`${product.name} — ${colorway.name}`}
-                className="max-h-[calc(100svh-11rem)] w-full max-w-[min(100%,42rem)] object-contain drop-shadow-[0_24px_48px_rgba(0,0,0,0.1)] lg:max-h-[calc(100vh-7rem)] lg:max-w-[min(92vw,36rem)]"
+                className="max-h-[min(52vh,520px)] w-full object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] sm:max-h-[min(58vh,600px)]"
                 fetchPriority="high"
               />
-              <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white opacity-0 transition group-hover:opacity-100">
+              <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full border border-black/10 bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-surface-ink opacity-0 shadow-sm transition group-hover:opacity-100">
                 <ZoomIn className="size-3.5" aria-hidden />
-                Full screen
+                Enlarge
               </span>
             </button>
             {galleryUrls.length > 1 ? (
-              <ul className="mt-4 flex flex-wrap justify-center gap-2" aria-label="Product images">
+              <ul className="mt-4 flex flex-wrap gap-2" aria-label="Product images">
                 {galleryUrls.map((url, i) => (
                   <li key={url}>
                     <button
                       type="button"
                       onClick={() => setGalleryIndex(i)}
-                      className={`overflow-hidden rounded-lg border-2 bg-white/60 p-1 transition ${
-                        galleryIndex === i ? 'border-accent-coral' : 'border-black/10 opacity-80 hover:opacity-100'
+                      className={`overflow-hidden rounded-lg border-2 p-1 transition ${
+                        galleryIndex === i ? 'border-accent-coral' : 'border-transparent opacity-80 hover:opacity-100'
                       }`}
                     >
                       <img src={url} alt="" className="size-16 object-contain sm:size-20" />
@@ -155,7 +152,7 @@ export function ProductPage() {
             ) : null}
           </div>
 
-          <div className="border-t border-black/8 bg-surface-cream px-4 py-10 sm:px-8 lg:border-t-0 lg:border-l lg:py-16 lg:pr-[max(1rem,5vw)]">
+          <div>
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-cream-muted">
               {product.collectionSlugs.join(' · ')}
             </p>
@@ -226,7 +223,7 @@ export function ProductPage() {
             </div>
           </div>
         </div>
-      </section>
+      </SectionShell>
 
       {fullscreenImage && mainImageSrc ? (
         <div

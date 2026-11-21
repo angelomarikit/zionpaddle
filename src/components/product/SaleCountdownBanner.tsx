@@ -1,14 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Clock } from 'lucide-react'
-import {
-  formatSaleCountdownRemaining,
-  saleCountdownUrgencyLine,
-  type ProductSaleCountdown,
-} from '../../lib/catalog/saleCountdown'
+import { saleCountdownOneLine, type ProductSaleCountdown } from '../../lib/catalog/saleCountdown'
 
 type Props = {
   productSlug: string
   countdown: ProductSaleCountdown
+  className?: string
 }
 
 function initialEndMs(countdown: ProductSaleCountdown): number | null {
@@ -21,7 +17,7 @@ function initialEndMs(countdown: ProductSaleCountdown): number | null {
   return null
 }
 
-export function SaleCountdownBanner({ productSlug, countdown }: Props) {
+export function SaleCountdownBanner({ productSlug, countdown, className = '' }: Props) {
   const rollingMs = (countdown.rollingMinutes ?? 5) * 60_000
   const [endMs, setEndMs] = useState<number | null>(() => initialEndMs(countdown))
 
@@ -52,27 +48,24 @@ export function SaleCountdownBanner({ productSlug, countdown }: Props) {
   }
 
   const headline = countdown.headline?.trim() || 'Hurry!'
-  const urgency = saleCountdownUrgencyLine(remainingMs)
   const expired = countdown.mode === 'fixed' && remainingMs <= 0
 
   if (expired) return null
 
+  const { clock, suffix } = saleCountdownOneLine(headline, remainingMs)
+
   return (
-    <div
-      className="rounded-lg border border-red-700/40 bg-red-600 px-4 py-3 text-white shadow-[0_8px_24px_rgba(185,28,28,0.25)]"
+    <p
+      className={`text-sm font-semibold leading-snug text-red-600 ${className}`}
       role="status"
       aria-live="polite"
     >
-      <div className="flex items-start gap-3">
-        <Clock className="mt-0.5 size-5 shrink-0 opacity-90" aria-hidden />
-        <div>
-          <p className="text-sm font-extrabold uppercase tracking-[0.12em]">{headline}</p>
-          <p className="mt-1 text-sm font-semibold leading-snug">{urgency}</p>
-          <p className="mt-2 font-mono text-xs uppercase tracking-wide text-white/85">
-            {formatSaleCountdownRemaining(remainingMs)}
-          </p>
-        </div>
-      </div>
-    </div>
+      <span className="uppercase tracking-wide">{headline}</span>
+      <span aria-hidden> — </span>
+      <span className="font-mono text-[0.95em] font-bold tabular-nums tracking-tight text-red-700">
+        {clock}
+      </span>
+      <span> {suffix}</span>
+    </p>
   )
 }

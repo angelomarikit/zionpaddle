@@ -163,6 +163,14 @@ export function ProductPage() {
             ) : null}
             {colorway.tagline ? <p className="mt-1 text-base italic text-cream-muted">{colorway.tagline}</p> : null}
 
+            {product.saleCountdown?.enabled ? (
+              <SaleCountdownBanner
+                productSlug={product.slug}
+                countdown={product.saleCountdown}
+                className="mt-4"
+              />
+            ) : null}
+
             {reviewMeta ? (
               <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
                 <div className="flex gap-0.5" aria-hidden>
@@ -185,12 +193,6 @@ export function ProductPage() {
             <p className="mt-6 text-3xl font-bold">{formatPhp(product.pricePhp)}</p>
             {product.compareAtPhp ? (
               <p className="text-sm text-cream-muted line-through">{formatPhp(product.compareAtPhp)}</p>
-            ) : null}
-
-            {product.saleCountdown?.enabled ? (
-              <div className="mt-4">
-                <SaleCountdownBanner productSlug={product.slug} countdown={product.saleCountdown} />
-              </div>
             ) : null}
 
             <div className="mt-6 space-y-5">

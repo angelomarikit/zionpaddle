@@ -46,13 +46,25 @@ export function formatSaleCountdownRemaining(ms: number): string {
   return `${seconds} second${seconds === 1 ? '' : 's'}`
 }
 
-export function saleCountdownUrgencyLine(remainingMs: number): string {
-  const minutes = Math.floor(remainingMs / 60000)
-  if (minutes >= 60) {
-    return `${formatSaleCountdownRemaining(remainingMs)} left before this sale ends`
+/** Live clock segment for inline countdown (updates every second). */
+export function formatSaleCountdownClock(ms: number): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000))
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  const pad = (n: number) => String(n).padStart(2, '0')
+  if (h > 0) return `${h}:${pad(m)}:${pad(s)}`
+  return `${pad(m)}:${pad(s)}`
+}
+
+export function saleCountdownOneLine(headline: string, remainingMs: number): {
+  clock: string
+  suffix: string
+} {
+  const clock =
+    remainingMs >= 86_400_000 ? formatSaleCountdownRemaining(remainingMs) : formatSaleCountdownClock(remainingMs)
+  return {
+    clock,
+    suffix: 'left before the sale ends',
   }
-  if (minutes >= 1) {
-    return `${minutes} minute${minutes === 1 ? '' : 's'} left before the sale ends`
-  }
-  return 'Less than a minute left — grab it before the sale ends'
 }

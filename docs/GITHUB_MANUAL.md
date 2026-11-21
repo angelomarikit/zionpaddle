@@ -152,6 +152,57 @@ gh issue list
 
 ---
 
+## Troubleshooting: `failed to push some refs`
+
+### 1. No upstream branch (first push)
+
+```text
+fatal: The current branch master has no upstream branch.
+```
+
+Fix:
+
+```bash
+git push -u origin master
+```
+
+(Use `main` instead of `master` if that is your default branch.)
+
+### 2. Remote has commits you do not have (rejected / non-fast-forward)
+
+```text
+error: failed to push some refs to 'https://github.com/...'
+hint: Updates were rejected because the remote contains work that you do not have locally.
+```
+
+GitHub often creates an initial README or license. Pull first, then push:
+
+```bash
+git pull origin master --rebase
+# resolve conflicts if any, then:
+git push origin master
+```
+
+If histories are unrelated (empty local vs README-only remote):
+
+```bash
+git pull origin master --allow-unrelated-histories
+# fix conflicts, commit if needed
+git push -u origin master
+```
+
+### 3. Auth / permission
+
+Sign in again:
+
+```bash
+gh auth login
+```
+
+Or use a [Personal Access Token](https://github.com/settings/tokens) as the password when Git prompts you.
+
+---
+
 ## Safety reminders (this repo)
 
 - Do not commit `.env` or secrets — use `.env.example` as the template.

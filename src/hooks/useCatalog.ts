@@ -1,18 +1,24 @@
 import { useQuery } from '@tanstack/react-query'
 import { products as mockProducts } from '../data/mock/products'
 import { collections as mockCollectionsList } from '../data/mock/collections'
-import { fetchCollectionsFromSupabase, fetchProductsFromSupabase, getCatalogSource } from '../services/catalog'
+import {
+  fetchCollectionsFromSupabase,
+  fetchProductsFromSupabase,
+  getCatalogSource,
+  mergeStorefrontProducts,
+} from '../services/catalog'
 import { applyCollectionPatches, applyProductPatches, filterDeletedCatalogProducts } from '../services/cms/localCms'
 import type { Collection, Product } from '../types/commerce'
 
 export function useCatalog() {
   const productsQuery = useQuery({
     queryKey: ['catalog', 'products'],
-    queryFn: async (): Promise<Product[]> =>
-      filterDeletedCatalogProducts(
-        applyProductPatches((await fetchProductsFromSupabase()) ?? mockProducts),
-      ),
-    staleTime: 60_000,
+    queryFn: async (): Promise<Product[]> => {
+      const fromDb = await fetchProductsFromSupabase()
+      const merged = mergeStorefrontProducts(fromDb, mockProducts)
+      return filterDeletedCatalogProducts(applyProductPatches(merged))
+    },
+    staleTime: 30_000,
   })
 
   const collectionsQuery = useQuery({

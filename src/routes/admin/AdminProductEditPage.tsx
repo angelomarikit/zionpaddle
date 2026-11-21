@@ -11,7 +11,7 @@ import {
 } from '../../services/admin/productsAdmin'
 import { listStaffCollections } from '../../services/admin/collectionsAdmin'
 import { uploadStoreImage } from '../../services/admin/mediaUpload'
-import { STORE_ONLINE_HINT, friendlyAdminError } from '../../lib/admin/messages'
+import { friendlyAdminError } from '../../lib/admin/messages'
 import { AdminCard, AdminPage, adminField, adminLabel } from '../../components/admin/AdminShell'
 
 export function AdminProductEditPage() {
@@ -57,6 +57,10 @@ export function AdminProductEditPage() {
       slug: resolvedSlug,
       subtitle: undefined,
     }
+    if (payload.published && payload.collection_slugs.length === 0) {
+      setError('Live products should be in at least one collection. Pick a collection on the right, or save as Draft first.')
+      return
+    }
     setSaving(true)
     setError(undefined)
     const result = await saveStaffProduct(payload)
@@ -65,9 +69,15 @@ export function AdminProductEditPage() {
       setError(friendlyAdminError(result.error))
       return
     }
-    setMessage(result.online ? STORE_ONLINE_HINT : 'Saved on this device.')
+    setMessage(
+      result.online
+        ? payload.published
+          ? 'Saved and live on your store. Check Collections (All) or assign a collection so shoppers can filter it.'
+          : 'Saved as draft — switch status to Live on store when you are ready.'
+        : 'Saved on this device.',
+    )
     void queryClient.invalidateQueries({ queryKey: ['admin'] })
-    void queryClient.invalidateQueries({ queryKey: ['catalog'] })
+    void queryClient.invalidateQueries({ queryKey: ['catalog'], refetchType: 'active' })
     if (isNew) navigate(`/admin/products/${resolvedSlug}`, { replace: true })
     else setDraft(payload)
   }
@@ -151,6 +161,18 @@ export function AdminProductEditPage() {
       title={isNew ? 'Add product' : draft.name || 'Edit product'}
       actions={
         <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm">
+            <span className="font-medium text-admin-ink">Status</span>
+            <select
+              className="rounded-lg border border-admin-input bg-white px-2 py-1.5 text-sm"
+              value={draft.published ? 'live' : 'draft'}
+              disabled={saving || deleting}
+              onChange={(e) => setDraft({ ...draft, published: e.target.value === 'live' })}
+            >
+              <option value="draft">Draft</option>
+              <option value="live">Live on store</option>
+            </select>
+          </label>
           {!isNew ? (
             <button
               type="button"
@@ -551,15 +573,10 @@ export function AdminProductEditPage() {
 
           <AdminCard className="p-5">
             <h2 className="font-semibold">Organization</h2>
+            <p className="mt-1 text-xs text-admin-muted">
+              Use the status menu (top right) for Draft vs Live. Live products show under Collections → All and on their product page.
+            </p>
             <label className="mt-3 flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={draft.published}
-                onChange={(e) => setDraft({ ...draft, published: e.target.checked })}
-              />
-              Active on store
-            </label>
-            <label className="mt-2 flex items-center gap-2 text-sm">
               <input type="checkbox" checked={draft.hero} onChange={(e) => setDraft({ ...draft, hero: e.target.checked })} />
               Feature on home
             </label>

@@ -203,6 +203,7 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
       published: draft.published,
       hero: draft.hero,
       galleryImages: draft.gallery_images,
+      collectionSlugs: draft.collection_slugs,
     })
     return { ok: true, online: true }
   }
@@ -221,6 +222,7 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
     published: draft.published,
     hero: draft.hero,
     galleryImages: draft.gallery_images,
+    collectionSlugs: draft.collection_slugs,
   })
   return { ok: true, online: false }
 }

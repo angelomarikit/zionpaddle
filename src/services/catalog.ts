@@ -61,18 +61,47 @@ function mapProduct(row: DbProduct): Product {
   }
 }
 
+const PUBLISHED_PRODUCT_SELECT =
+  'slug, name, subtitle, description, price_php, compare_at_php, collection_slugs, weight_grams, hero, specs, features, grip_sizes, gallery_images, product_colorways(*)'
+
+const PUBLISHED_PRODUCT_SELECT_LEGACY =
+  'slug, name, subtitle, description, price_php, compare_at_php, collection_slugs, weight_grams, hero, specs, features, grip_sizes, product_colorways(*)'
+
+async function loadPublishedProducts(sb: NonNullable<ReturnType<typeof getSupabase>>): Promise<Product[] | null> {
+  let data: DbProduct[] | null = null
+  let error: { message: string } | null = null
+
+  const primary = await sb.from('products').select(PUBLISHED_PRODUCT_SELECT).eq('published', true).order('name')
+  data = (primary.data ?? null) as DbProduct[] | null
+  error = primary.error
+
+  if (error && /gallery_images/i.test(error.message)) {
+    const retry = await sb
+      .from('products')
+      .select(PUBLISHED_PRODUCT_SELECT_LEGACY)
+      .eq('published', true)
+      .order('name')
+    data = (retry.data ?? null) as DbProduct[] | null
+    error = retry.error
+  }
+
+  if (error) return null
+  if (!data?.length) return []
+  return data.map(mapProduct)
+}
+
+/** Supabase rows override mock rows with the same slug; DB-only slugs are included. */
+export function mergeStorefrontProducts(dbProducts: Product[] | null, mockCatalog: Product[]): Product[] {
+  if (dbProducts === null) return mockCatalog
+  const bySlug = new Map(mockCatalog.map((p) => [p.slug, p]))
+  for (const p of dbProducts) bySlug.set(p.slug, p)
+  return [...bySlug.values()]
+}
+
 export async function fetchProductsFromSupabase(): Promise<Product[] | null> {
   const sb = getSupabase()
   if (!sb || !supabaseConfigured) return null
-
-  const { data, error } = await sb
-    .from('products')
-    .select('*, product_colorways(*)')
-    .eq('published', true)
-    .order('name')
-
-  if (error || !data?.length) return null
-  return (data as DbProduct[]).map(mapProduct)
+  return loadPublishedProducts(sb)
 }
 
 export async function fetchCollectionsFromSupabase(): Promise<Collection[] | null> {
@@ -87,7 +116,7 @@ export async function fetchCollectionsFromSupabase(): Promise<Collection[] | nul
 
   if (error || !data?.length) return null
 
-  const allProducts = (await fetchProductsFromSupabase()) ?? mockProducts
+  const allProducts = mergeStorefrontProducts(await fetchProductsFromSupabase(), mockProducts)
 
   return data.map((row: { slug: string; name: string; description: string; banner_url: string | null }) => ({
     id: row.slug,

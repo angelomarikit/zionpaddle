@@ -51,6 +51,7 @@ export type CatalogProductPatch = {
   hero?: boolean
   /** Additional product-page images (not the active colorway hero). */
   galleryImages?: string[]
+  collectionSlugs?: string[]
 }
 
 export type CatalogCollectionPatch = {

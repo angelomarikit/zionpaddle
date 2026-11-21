@@ -123,6 +123,7 @@ export function applyProductPatches(products: Product[]): Product[] {
       weightGrams: patch.weightGrams ?? p.weightGrams,
       hero: patch.hero ?? p.hero,
       images: patch.galleryImages ?? p.images,
+      collectionSlugs: patch.collectionSlugs ?? p.collectionSlugs,
     }
   })
 }

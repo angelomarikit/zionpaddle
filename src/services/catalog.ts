@@ -1,5 +1,5 @@
 import type { Collection, Colorway, Product } from '../types/commerce'
-import { defaultDbColorways, defaultDbGripSizes } from '../lib/catalog/customProduct'
+import { defaultDbGripSizes, primaryColorwayFromUploads } from '../lib/catalog/customProduct'
 import { parseGalleryImagesJson } from '../lib/catalog/productGallery'
 import { getSupabase, supabaseConfigured } from '../lib/supabase/client'
 import { products as mockProducts } from '../data/mock/products'
@@ -44,9 +44,21 @@ function mapProduct(row: DbProduct): Product {
       image: c.image_url?.trim() || '',
     }))
 
-  const resolvedColorways = colorways.length
-    ? colorways.map((c) => ({ ...c, image: c.image || '/placeholders/collection-pro.svg' }))
-    : defaultDbColorways()
+  const gallery = parseGalleryImagesJson(row.gallery_images)
+  const mappedColorways = primaryColorwayFromUploads(row.name, colorways, gallery)
+  const resolvedColorways =
+    mappedColorways.length > 0
+      ? mappedColorways
+      : [
+          {
+            id: 'primary',
+            slug: 'primary',
+            name: row.name,
+            tagline: '',
+            hex: '#141414',
+            image: '',
+          },
+        ]
 
   return {
     id: row.slug,
@@ -63,7 +75,7 @@ function mapProduct(row: DbProduct): Product {
     gripSizes: row.grip_sizes?.length ? row.grip_sizes : defaultDbGripSizes(),
     specs: row.specs ?? [],
     features: row.features?.length ? row.features : [],
-    images: parseGalleryImagesJson(row.gallery_images),
+    images: gallery,
   }
 }
 

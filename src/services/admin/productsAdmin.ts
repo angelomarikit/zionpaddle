@@ -140,6 +140,11 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
   const sb = getSupabase()
   if (sb && supabaseConfigured) {
     const { data: existing } = await sb.from('products').select('id').eq('slug', draft.slug).maybeSingle()
+    const colorwayUrls = draft.colorways.map((c) => c.image_url?.trim()).filter(Boolean) as string[]
+    const gallery_images = draft.gallery_images.length
+      ? draft.gallery_images
+      : [...new Set(colorwayUrls)]
+
     const row = {
       slug: draft.slug,
       name: draft.name,
@@ -154,7 +159,7 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
       grip_sizes: draft.grip_sizes,
       specs: draft.specs,
       features: [],
-      gallery_images: draft.gallery_images,
+      gallery_images,
       updated_at: new Date().toISOString(),
     }
     let productId = (existing as { id: string } | null)?.id

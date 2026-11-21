@@ -13,7 +13,7 @@ import { SectionShell } from '../components/tempo/SectionShell'
 import { Button } from '../components/ui/Button'
 import { useCart } from '../context/CartContext'
 import { dayoColorwayAssets } from '../data/media/dayoMedia'
-import { isDemoCatalogProduct, productHeroImage } from '../lib/catalog/customProduct'
+import { isDemoCatalogProduct, primaryProductImage, productHeroImage } from '../lib/catalog/customProduct'
 import { productPageGalleryUrls } from '../lib/catalog/productGallery'
 import type { Product } from '../types/commerce'
 
@@ -57,11 +57,12 @@ export function ProductPage() {
 
   const demo = product ? isDemoCatalogProduct(product.slug) : false
   const assets = demo && colorway ? dayoColorwayAssets[colorway.id] : undefined
-  const heroSrc = product && colorway
-    ? demo
-      ? (assets?.heroImage ?? assets?.poster ?? colorway.image)
-      : productHeroImage(product, colorway)
-    : ''
+  const heroSrc =
+    product && colorway
+      ? demo
+        ? (assets?.heroImage ?? assets?.poster ?? colorway.image)
+        : productHeroImage(product, colorway) || primaryProductImage(product) || ''
+      : ''
   const galleryUrls = useMemo(
     () => (product && heroSrc ? productPageGalleryUrls(product, heroSrc) : []),
     [product, heroSrc],

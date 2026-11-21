@@ -43,13 +43,23 @@ export function AdminProductEditPage() {
   }, [isNew])
 
   const save = async () => {
-    if (!draft.slug.trim() || !draft.name.trim()) {
-      setError('Please enter a product name and web address name.')
+    if (!draft.name.trim()) {
+      setError('Please enter a product name.')
       return
+    }
+    const resolvedSlug = (isNew ? slugify(draft.name) : draft.slug.trim() || slugify(draft.name)) || slugify(draft.name)
+    if (!resolvedSlug) {
+      setError('Please enter a product name.')
+      return
+    }
+    const payload: ProductDraft = {
+      ...draft,
+      slug: resolvedSlug,
+      subtitle: undefined,
     }
     setSaving(true)
     setError(undefined)
-    const result = await saveStaffProduct(draft)
+    const result = await saveStaffProduct(payload)
     setSaving(false)
     if (!result.ok) {
       setError(friendlyAdminError(result.error))
@@ -58,7 +68,8 @@ export function AdminProductEditPage() {
     setMessage(result.online ? STORE_ONLINE_HINT : 'Saved on this device.')
     void queryClient.invalidateQueries({ queryKey: ['admin'] })
     void queryClient.invalidateQueries({ queryKey: ['catalog'] })
-    if (isNew) navigate(`/admin/products/${draft.slug}`, { replace: true })
+    if (isNew) navigate(`/admin/products/${resolvedSlug}`, { replace: true })
+    else setDraft(payload)
   }
 
   const removeProduct = async () => {
@@ -89,10 +100,21 @@ export function AdminProductEditPage() {
 
   const collectionOptions = collections?.collections ?? []
 
+  const productUploadPrefix = () => {
+    const slug = draft.slug.trim() || slugify(draft.name.trim())
+    if (!slug) return null
+    return `products/${slug}`
+  }
+
   const uploadGalleryImage = async (file: File) => {
+    const prefix = productUploadPrefix()
+    if (!prefix) {
+      setError('Enter a product name before uploading images.')
+      return
+    }
     const token = `gallery-${Date.now()}`
     setUploading(token)
-    const path = `products/${draft.slug || 'new'}/gallery/${token}.${ext(file)}`
+    const path = `${prefix}/gallery/${token}.${ext(file)}`
     const result = await uploadStoreImage(file, path)
     setUploading(undefined)
     if (result.error || !result.url) {
@@ -103,9 +125,14 @@ export function AdminProductEditPage() {
   }
 
   const uploadColorwayImage = async (index: number, file: File) => {
+    const prefix = productUploadPrefix()
+    if (!prefix) {
+      setError('Enter a product name before uploading images.')
+      return
+    }
     const key = draft.colorways[index]?.external_key ?? `color-${index}`
     setUploading(key)
-    const path = `products/${draft.slug || 'new'}/colorways/${key}-${Date.now()}.${ext(file)}`
+    const path = `${prefix}/colorways/${key}-${Date.now()}.${ext(file)}`
     const result = await uploadStoreImage(file, path)
     setUploading(undefined)
     if (result.error) {
@@ -153,24 +180,14 @@ export function AdminProductEditPage() {
                 <input
                   className={adminField}
                   value={draft.name}
-                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                />
-              </label>
-              <label>
-                <span className={adminLabel}>Web address (slug)</span>
-                <input
-                  className={adminField}
-                  value={draft.slug}
-                  disabled={!isNew}
-                  onChange={(e) => setDraft({ ...draft, slug: slugify(e.target.value) })}
-                />
-              </label>
-              <label>
-                <span className={adminLabel}>Subtitle</span>
-                <input
-                  className={adminField}
-                  value={draft.subtitle ?? ''}
-                  onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })}
+                  onChange={(e) => {
+                    const name = e.target.value
+                    setDraft({
+                      ...draft,
+                      name,
+                      ...(isNew ? { slug: slugify(name) } : {}),
+                    })
+                  }}
                 />
               </label>
               <label className="sm:col-span-2">
@@ -643,6 +660,6 @@ function slugify(v: string) {
 }
 
 function ext(file: File) {
-  const n = file.name.split('.').pop()
+  const n = file.name.split('.').pop()?.toLowerCase()
   return n && n.length < 5 ? n : 'jpg'
 }

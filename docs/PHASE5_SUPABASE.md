@@ -15,6 +15,7 @@
 11. `supabase/migrations/016_staff_permissions.sql` (`permissions`, `display_name`, admin profile policies)
 12. `supabase/migrations/017_admin_owner_profile.sql` (`admin@zion.com` owner bootstrap policy)
 13. `supabase/migrations/018_product_gallery_images.sql` (`products.gallery_images` JSON array for PDP gallery)
+14. `supabase/migrations/019_store_media_upload_fix.sql` (storage MIME types + owner upload policy)
 
 ## Env
 

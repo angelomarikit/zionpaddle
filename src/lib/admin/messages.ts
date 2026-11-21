@@ -10,8 +10,10 @@ export function friendlyAdminError(message?: string): string {
   if (lower.includes('bucket') && lower.includes('not found'))
     return 'Store media storage is not set up. Run migration 011_store_media_storage.sql in Supabase.'
   if (lower.includes('row-level') || lower.includes('security policy') || lower.includes('not authorized'))
-    return 'Upload blocked: your account needs an admin or staff profile in Supabase. Run migrations 011 and 017, then sign in again.'
-  return 'We could not complete that action. Please try again in a moment.'
+    return 'Upload blocked: your account needs an admin or staff profile in Supabase. Run migrations 011, 017, and 020, then sign in again.'
+  if (lower.includes('infinite recursion') || lower.includes('internal server'))
+    return 'Database policy error: run migration 020_fix_profiles_rls_recursion.sql in Supabase, then refresh and sign in again.'
+  return message.length < 160 ? message : 'We could not complete that action. Please try again in a moment.'
 }
 
 export const STORE_OFFLINE_HINT =

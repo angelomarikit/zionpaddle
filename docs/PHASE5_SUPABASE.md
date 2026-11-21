@@ -16,6 +16,7 @@
 12. `supabase/migrations/017_admin_owner_profile.sql` (`admin@zion.com` owner bootstrap policy)
 13. `supabase/migrations/018_product_gallery_images.sql` (`products.gallery_images` JSON array for PDP gallery)
 14. `supabase/migrations/019_store_media_upload_fix.sql` (storage MIME types + owner upload policy)
+15. `supabase/migrations/020_fix_profiles_rls_recursion.sql` (**required** if admin API returns 500 on `profiles` / `orders`)
 
 ## Env
 
@@ -24,6 +25,25 @@ VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
 VITE_ENABLE_ADMIN=true
 ```
+
+### Admin shows 500 on `profiles` / `orders` / `products`
+
+If the browser Network tab shows **500** on `rest/v1/profiles` or `orders`, you likely ran **016** without **020**. The old `profiles` read policy queries `profiles` again and PostgreSQL throws **infinite recursion detected in policy for relation "profiles"**.
+
+**Fix:** Supabase → **SQL** → paste and run the full file `supabase/migrations/020_fix_profiles_rls_recursion.sql`.
+
+Then confirm your user has a staff row (replace email if needed):
+
+```sql
+INSERT INTO profiles (user_id, email, role, display_name, permissions)
+SELECT u.id, lower(u.email), 'admin', 'ZION Admin', '{}'::jsonb
+FROM auth.users u
+WHERE lower(u.email) = 'admin@zion.com'
+ON CONFLICT (user_id) DO UPDATE
+  SET role = 'admin', display_name = COALESCE(profiles.display_name, 'ZION Admin');
+```
+
+Sign out of `/admin/login`, sign in again, retry product image upload.
 
 ### Vercel
 
@@ -41,7 +61,7 @@ VITE_ENABLE_ADMIN=true
    - Email: `admin@zion.com`  
    - Password: your choice (share only with owners)  
    - Confirm email if your project requires it
-2. Run migrations through `018_product_gallery_images.sql`.
+2. Run migrations through `020_fix_profiles_rls_recursion.sql`.
 3. Sign in at `/admin/login` with `admin@zion.com`.  
    The app creates or upgrades the `profiles` row to **admin** on first sign-in.
 

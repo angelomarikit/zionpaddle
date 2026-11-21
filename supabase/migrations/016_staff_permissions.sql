@@ -1,4 +1,5 @@
 -- Per-staff permissions + admin management of profiles
+-- NOTE: profiles_select_self below recurses — run 020_fix_profiles_rls_recursion.sql after this.
 
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS display_name text;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS permissions jsonb NOT NULL DEFAULT '{}'::jsonb;

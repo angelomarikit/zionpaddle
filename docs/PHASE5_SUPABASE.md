@@ -24,6 +24,14 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 VITE_ENABLE_ADMIN=true
 ```
 
+### Vercel
+
+- `VITE_*` variables are **inlined at build time**, not read at runtime. After changing env in the Vercel dashboard, trigger a **new deployment** (Redeploy).
+- Add **VITE_SUPABASE_URL** and **VITE_SUPABASE_ANON_KEY** for Production (and Preview if you test admin there).
+- Admin routes mount when `VITE_ENABLE_ADMIN=true`, or when those Supabase vars are set and you have **not** set `VITE_ENABLE_ADMIN=false`.
+- If opening `https://yoursite.vercel.app/admin` shows a **404**, the SPA fallback was missing — the repo includes `vercel.json` rewrites to `index.html`; redeploy after pulling that file.
+- If `/admin` **redirects to the home page**, the build did not see Supabase/admin env — check names (`VITE_` prefix), redeploy, or set `VITE_ENABLE_ADMIN=true` explicitly.
+
 ## First staff user (account owner)
 
 **Owner email:** `admin@zion.com` — full admin access, staff management, all permissions.

@@ -25,7 +25,10 @@ import { AdminSettingsPage } from '../routes/admin/AdminSettingsPage'
 import { RequireStaffPermission } from '../components/admin/RequireStaffPermission'
 import { CmsStaticPage } from '../routes/CmsStaticPage'
 
-const adminEnabled = import.meta.env.VITE_ENABLE_ADMIN === 'true'
+/** Vite bakes env at build time — set vars in Vercel and redeploy. Admin on when flag is true, or Supabase is set and flag is not explicitly false. */
+const adminFlag = import.meta.env.VITE_ENABLE_ADMIN
+const hasSupabaseEnv = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY)
+const adminEnabled = adminFlag === 'true' || (adminFlag !== 'false' && hasSupabaseEnv)
 
 const adminRoutes = adminEnabled
   ? [

@@ -1,10 +1,13 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { products as mockProducts } from '../data/mock/products'
 import { collections as mockCollectionsList } from '../data/mock/collections'
 import {
+  collectionsWithProductSlugs,
   fetchCollectionsFromSupabase,
   fetchProductsFromSupabase,
   getCatalogSource,
+  mergeStorefrontCollections,
   mergeStorefrontProducts,
 } from '../services/catalog'
 import { applyCollectionPatches, applyProductPatches, filterDeletedCatalogProducts } from '../services/cms/localCms'
@@ -19,20 +22,36 @@ export function useCatalog() {
       return filterDeletedCatalogProducts(applyProductPatches(merged))
     },
     staleTime: 30_000,
+    refetchOnWindowFocus: true,
   })
 
   const collectionsQuery = useQuery({
     queryKey: ['catalog', 'collections'],
-    queryFn: async (): Promise<Collection[]> =>
-      applyCollectionPatches((await fetchCollectionsFromSupabase()) ?? mockCollectionsList),
-    staleTime: 60_000,
+    queryFn: async (): Promise<Collection[]> => {
+      const fromDb = await fetchCollectionsFromSupabase()
+      return applyCollectionPatches(mergeStorefrontCollections(fromDb, mockCollectionsList))
+    },
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   })
 
+  const products = productsQuery.data ?? filterDeletedCatalogProducts(applyProductPatches(mockProducts))
+  const collectionsRaw = collectionsQuery.data ?? applyCollectionPatches(mockCollectionsList)
+  const collections = useMemo(
+    () => collectionsWithProductSlugs(collectionsRaw, products),
+    [collectionsRaw, products],
+  )
+
+  const dbProductCount = productsQuery.data?.length ?? 0
+
   return {
-    products: productsQuery.data ?? filterDeletedCatalogProducts(mockProducts),
-    collections: collectionsQuery.data ?? mockCollectionsList,
+    products,
+    collections,
     isLoading: productsQuery.isLoading || collectionsQuery.isLoading,
-    source: productsQuery.data && getCatalogSource() === 'supabase' ? 'supabase' : 'mock',
+    source:
+      getCatalogSource() === 'supabase' && (productsQuery.data !== undefined || dbProductCount > 0)
+        ? 'supabase'
+        : 'mock',
   }
 }
 

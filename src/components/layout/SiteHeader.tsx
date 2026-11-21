@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { Menu, X } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { ZionLogo } from '../brand/ZionLogo'
+import { ProductSearchButton } from './ProductSearch'
 
 const links = [
   { to: '/collections', label: 'Shop' },
@@ -50,6 +51,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <ProductSearchButton />
           <button
             type="button"
             className="relative rounded-sm border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white"

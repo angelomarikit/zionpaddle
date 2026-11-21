@@ -58,8 +58,8 @@ export function AdminProductEditPage() {
       subtitle: undefined,
     }
     if (payload.published && payload.collection_slugs.length === 0) {
-      setError('Live products should be in at least one collection. Pick a collection on the right, or save as Draft first.')
-      return
+      const fallback = collectionOptions.find((c) => c.published)?.slug ?? collectionOptions[0]?.slug
+      if (fallback) payload.collection_slugs = [fallback]
     }
     setSaving(true)
     setError(undefined)

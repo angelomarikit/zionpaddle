@@ -4,6 +4,7 @@ import { getSupabase, supabaseConfigured } from '../lib/supabase/client'
 import { products as mockProducts } from '../data/mock/products'
 
 type DbProduct = {
+  id?: string
   slug: string
   name: string
   subtitle: string | null
@@ -61,33 +62,54 @@ function mapProduct(row: DbProduct): Product {
   }
 }
 
-const PUBLISHED_PRODUCT_SELECT =
-  'slug, name, subtitle, description, price_php, compare_at_php, collection_slugs, weight_grams, hero, specs, features, grip_sizes, gallery_images, product_colorways(*)'
+const PRODUCT_BASE_COLS =
+  'id, slug, name, subtitle, description, price_php, compare_at_php, collection_slugs, weight_grams, hero, specs, features, grip_sizes'
 
-const PUBLISHED_PRODUCT_SELECT_LEGACY =
-  'slug, name, subtitle, description, price_php, compare_at_php, collection_slugs, weight_grams, hero, specs, features, grip_sizes, product_colorways(*)'
+async function attachColorways(
+  sb: NonNullable<ReturnType<typeof getSupabase>>,
+  rows: DbProduct[],
+): Promise<DbProduct[]> {
+  const ids = rows.map((r) => r.id).filter(Boolean) as string[]
+  if (!ids.length) return rows.map((r) => ({ ...r, product_colorways: r.product_colorways ?? [] }))
+  const { data: colorways } = await sb.from('product_colorways').select('*').in('product_id', ids)
+  const byProduct = new Map<string, DbProduct['product_colorways']>()
+  for (const c of colorways ?? []) {
+    const pid = (c as { product_id: string }).product_id
+    const list = byProduct.get(pid) ?? []
+    list.push(c as NonNullable<DbProduct['product_colorways']>[number])
+    byProduct.set(pid, list)
+  }
+  return rows.map((r) => ({
+    ...r,
+    product_colorways: r.product_colorways ?? (r.id ? byProduct.get(r.id) : undefined) ?? [],
+  }))
+}
 
 async function loadPublishedProducts(sb: NonNullable<ReturnType<typeof getSupabase>>): Promise<Product[] | null> {
-  let data: DbProduct[] | null = null
-  let error: { message: string } | null = null
+  const attempts = [
+    `${PRODUCT_BASE_COLS}, gallery_images`,
+    PRODUCT_BASE_COLS,
+    'id, slug, name, description, price_php, collection_slugs, weight_grams, hero, specs, features, grip_sizes',
+  ]
 
-  const primary = await sb.from('products').select(PUBLISHED_PRODUCT_SELECT).eq('published', true).order('name')
-  data = (primary.data ?? null) as DbProduct[] | null
-  error = primary.error
+  let rows: DbProduct[] | null = null
+  let lastError: string | null = null
 
-  if (error && /gallery_images/i.test(error.message)) {
-    const retry = await sb
-      .from('products')
-      .select(PUBLISHED_PRODUCT_SELECT_LEGACY)
-      .eq('published', true)
-      .order('name')
-    data = (retry.data ?? null) as DbProduct[] | null
-    error = retry.error
+  for (const cols of attempts) {
+    const { data, error } = await sb.from('products').select(cols).eq('published', true).order('name')
+    if (!error && data) {
+      rows = data as unknown as DbProduct[]
+      lastError = null
+      break
+    }
+    lastError = error?.message ?? null
   }
 
-  if (error) return null
-  if (!data?.length) return []
-  return data.map(mapProduct)
+  if (!rows) return lastError ? null : []
+  if (!rows.length) return []
+
+  const withColorways = await attachColorways(sb, rows)
+  return withColorways.map(mapProduct)
 }
 
 /** Supabase rows override mock rows with the same slug; DB-only slugs are included. */
@@ -104,6 +126,20 @@ export async function fetchProductsFromSupabase(): Promise<Product[] | null> {
   return loadPublishedProducts(sb)
 }
 
+export function mergeStorefrontCollections(dbCollections: Collection[] | null, mockCatalog: Collection[]): Collection[] {
+  if (dbCollections === null) return mockCatalog
+  const bySlug = new Map(mockCatalog.map((c) => [c.slug, c]))
+  for (const c of dbCollections) bySlug.set(c.slug, c)
+  return [...bySlug.values()]
+}
+
+export function collectionsWithProductSlugs(collections: Collection[], products: Product[]): Collection[] {
+  return collections.map((c) => ({
+    ...c,
+    productSlugs: products.filter((p) => p.collectionSlugs.includes(c.slug)).map((p) => p.slug),
+  }))
+}
+
 export async function fetchCollectionsFromSupabase(): Promise<Collection[] | null> {
   const sb = getSupabase()
   if (!sb || !supabaseConfigured) return null
@@ -114,7 +150,8 @@ export async function fetchCollectionsFromSupabase(): Promise<Collection[] | nul
     .eq('published', true)
     .order('sort_order')
 
-  if (error || !data?.length) return null
+  if (error) return null
+  if (!data?.length) return []
 
   const allProducts = mergeStorefrontProducts(await fetchProductsFromSupabase(), mockProducts)
 

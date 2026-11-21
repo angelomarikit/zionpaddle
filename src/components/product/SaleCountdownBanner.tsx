@@ -60,14 +60,14 @@ export function SaleCountdownBanner({ productSlug, countdown, className = '' }: 
 
   return (
     <p
-      className={`text-sm font-semibold leading-snug text-red-600 ${className}`}
+      className={`text-base font-semibold leading-snug text-red-600 sm:text-lg ${className}`}
       role="status"
       aria-live="off"
       aria-atomic="true"
     >
       <span className="uppercase tracking-wide">{headline}</span>
       <span aria-hidden> — </span>
-      <span className="font-mono text-[0.95em] font-bold tabular-nums tracking-tight text-red-700">
+      <span className="font-mono text-[1.05em] font-bold tabular-nums tracking-tight text-red-700 sm:text-[1.1em]">
         {clock}
       </span>
       <span> {suffix}</span>

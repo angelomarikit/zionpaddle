@@ -189,7 +189,7 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
       ? draft.gallery_images
       : [...new Set(colorwayUrls)]
 
-    const row = {
+    const rowCore = {
       slug: draft.slug,
       name: draft.name,
       subtitle: draft.subtitle ?? null,
@@ -203,22 +203,31 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
       grip_sizes: draft.grip_sizes,
       specs: draft.specs,
       features: [],
+      updated_at: new Date().toISOString(),
+    }
+    const rowFull = {
+      ...rowCore,
       gallery_images,
       sale_countdown_enabled: draft.sale_countdown_enabled,
       sale_countdown_mode: draft.sale_countdown_mode,
       sale_countdown_ends_at: draft.sale_countdown_ends_at,
       sale_countdown_rolling_minutes: draft.sale_countdown_rolling_minutes,
       sale_countdown_headline: draft.sale_countdown_headline?.trim() || null,
-      updated_at: new Date().toISOString(),
     }
     let productId = (existing as { id: string } | null)?.id
-    if (existing) {
-      const { error } = await sb.from('products').update(row).eq('slug', draft.slug)
-      if (error) return { ok: false, error: friendlyAdminError(error.message), online: true }
-    } else {
-      const { data, error } = await sb.from('products').insert(row).select('id').single()
-      if (error) return { ok: false, error: friendlyAdminError(error.message), online: true }
-      productId = (data as { id: string }).id
+    const persistRow = async (row: Record<string, unknown>) => {
+      if (existing) {
+        return sb.from('products').update(row).eq('slug', draft.slug)
+      }
+      return sb.from('products').insert(row).select('id').single()
+    }
+    let write = await persistRow(rowFull)
+    if (write.error && /column|gallery_images|sale_countdown/i.test(write.error.message)) {
+      write = await persistRow(rowCore)
+    }
+    if (write.error) return { ok: false, error: friendlyAdminError(write.error.message), online: true }
+    if (!existing && write.data) {
+      productId = (write.data as { id: string }).id
     }
 
     if (draft.hero) {

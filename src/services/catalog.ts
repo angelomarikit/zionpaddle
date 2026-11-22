@@ -86,8 +86,11 @@ function mapProduct(row: DbProduct): Product {
   }
 }
 
-const PRODUCT_BASE_COLS =
-  'id, slug, name, subtitle, description, price_php, compare_at_php, collection_slugs, weight_grams, hero, specs, features, grip_sizes, sale_countdown_enabled, sale_countdown_mode, sale_countdown_ends_at, sale_countdown_rolling_minutes, sale_countdown_headline'
+const PRODUCT_CORE_COLS =
+  'id, slug, name, subtitle, description, price_php, compare_at_php, collection_slugs, weight_grams, hero, specs, features, grip_sizes'
+
+const PRODUCT_OPTIONAL_COLS =
+  'gallery_images, sale_countdown_enabled, sale_countdown_mode, sale_countdown_ends_at, sale_countdown_rolling_minutes, sale_countdown_headline'
 
 async function attachColorways(
   sb: NonNullable<ReturnType<typeof getSupabase>>,
@@ -110,27 +113,31 @@ async function attachColorways(
 }
 
 async function loadPublishedProducts(sb: NonNullable<ReturnType<typeof getSupabase>>): Promise<Product[] | null> {
-  const attempts = [
-    `${PRODUCT_BASE_COLS}, gallery_images`,
-    PRODUCT_BASE_COLS,
-    'id, slug, name, description, price_php, collection_slugs, weight_grams, hero, specs, features, grip_sizes',
-  ]
+  const { data: core, error: coreError } = await sb
+    .from('products')
+    .select(PRODUCT_CORE_COLS)
+    .eq('published', true)
+    .order('name')
 
-  let rows: DbProduct[] | null = null
-  let lastError: string | null = null
+  if (coreError) return null
+  if (!core?.length) return []
 
-  for (const cols of attempts) {
-    const { data, error } = await sb.from('products').select(cols).eq('published', true).order('name')
-    if (!error && data) {
-      rows = data as unknown as DbProduct[]
-      lastError = null
-      break
-    }
-    lastError = error?.message ?? null
+  let rows = core as unknown as DbProduct[]
+
+  const { data: optional, error: optionalError } = await sb
+    .from('products')
+    .select(`id, ${PRODUCT_OPTIONAL_COLS}`)
+    .eq('published', true)
+
+  if (!optionalError && optional?.length) {
+    const byId = new Map(
+      (optional as { id: string }[]).map((row) => [row.id, row as unknown as Partial<DbProduct>]),
+    )
+    rows = rows.map((row) => ({
+      ...row,
+      ...(row.id ? byId.get(row.id) : undefined),
+    }))
   }
-
-  if (!rows) return lastError ? null : []
-  if (!rows.length) return []
 
   const withColorways = await attachColorways(sb, rows)
   return withColorways.map(mapProduct)
@@ -139,6 +146,7 @@ async function loadPublishedProducts(sb: NonNullable<ReturnType<typeof getSupaba
 /** Supabase rows override mock rows with the same slug; DB-only slugs are included. */
 export function mergeStorefrontProducts(dbProducts: Product[] | null, mockCatalog: Product[]): Product[] {
   if (dbProducts === null) return mockCatalog
+  if (dbProducts.length > 0) return dbProducts
   const bySlug = new Map(mockCatalog.map((p) => [p.slug, p]))
   for (const p of dbProducts) bySlug.set(p.slug, p)
   return [...bySlug.values()]

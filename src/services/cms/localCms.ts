@@ -1,6 +1,7 @@
 import type { CatalogCollectionPatch, CatalogProductPatch, SitePage, SiteSection } from '../../types/siteCms'
 import type { Collection, Product } from '../../types/commerce'
 import type { ProductSaleCountdown } from '../../lib/catalog/saleCountdown'
+import { isDemoCatalogProduct } from '../../lib/catalog/customProduct'
 import { defaultSitePages, defaultSiteSections } from '../../data/cms/defaults'
 
 import { getMigratedStorageItem } from '../../lib/storage/migrateKey'
@@ -90,10 +91,21 @@ export function markProductDeleted(slug: string) {
   writeJson(DELETED_PRODUCTS_KEY, [...set])
 }
 
+/** Clears a storefront tombstone after re-saving a live product (this browser only). */
+export function unmarkProductDeleted(slug: string) {
+  const set = readDeletedProductSlugs()
+  if (!set.delete(slug)) return
+  writeJson(DELETED_PRODUCTS_KEY, [...set])
+}
+
 export function filterDeletedCatalogProducts<T extends { slug: string }>(products: T[]): T[] {
   const deleted = readDeletedProductSlugs()
   if (!deleted.size) return products
-  return products.filter((p) => !deleted.has(p.slug))
+  return products.filter((p) => {
+    if (!deleted.has(p.slug)) return true
+    // Never hide live admin/Supabase slugs — tombstones only apply to bundled demo catalog.
+    return !isDemoCatalogProduct(p.slug)
+  })
 }
 
 export function readLocalCollectionPatches(): CatalogCollectionPatch[] {

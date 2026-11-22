@@ -9,6 +9,7 @@ import {
   readLocalProductPatches,
   removeLocalProductPatch,
   saveLocalProductPatch,
+  unmarkProductDeleted,
 } from '../cms/localCms'
 import { writeStockMap, readStockMap } from '../../data/mock/inventory'
 import { fetchSiteSections, saveSiteSection } from '../cms/siteContent'
@@ -275,6 +276,7 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
       return { ok: false, error: friendlyAdminError(message), online: true }
     }
 
+    unmarkProductDeleted(draft.slug)
     saveLocalProductPatch({
       slug: draft.slug,
       name: draft.name,
@@ -299,6 +301,7 @@ export async function saveStaffProduct(draft: ProductDraft): Promise<{ ok: boole
   const map = readStockMap()
   map[draft.slug] = draft.quantity_on_hand
   writeStockMap(map)
+  unmarkProductDeleted(draft.slug)
   saveLocalProductPatch({
     slug: draft.slug,
     name: draft.name,

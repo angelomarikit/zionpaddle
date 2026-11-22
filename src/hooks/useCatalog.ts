@@ -15,7 +15,7 @@ import type { Collection, Product } from '../types/commerce'
 
 export function useCatalog() {
   const productsQuery = useQuery({
-    queryKey: ['catalog', 'products'],
+    queryKey: ['catalog', 'products', 'v2'],
     queryFn: async (): Promise<Product[]> => {
       const fromDb = await fetchProductsFromSupabase()
       const merged = mergeStorefrontProducts(fromDb, mockProducts)

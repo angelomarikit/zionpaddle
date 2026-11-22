@@ -125,22 +125,40 @@ export function AdminProductEditPage() {
     return `products/${slug}`
   }
 
-  const uploadGalleryImage = async (file: File) => {
+  const uploadGalleryImages = async (files: File[]) => {
     const prefix = productUploadPrefix()
     if (!prefix) {
       setError('Enter a product name before uploading images.')
       return
     }
-    const token = `gallery-${Date.now()}`
-    setUploading(token)
-    const path = `${prefix}/gallery/${token}.${ext(file)}`
-    const result = await uploadStoreImage(file, path)
-    setUploading(undefined)
-    if (result.error || !result.url) {
-      setError(friendlyAdminError(result.error ?? 'Upload failed.'))
-      return
+    const images = files.filter((f) => f.type.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(f.name))
+    if (!images.length) return
+
+    setUploading('gallery-batch')
+    setError(undefined)
+    const newUrls: string[] = []
+    let failed = 0
+    const batch = Date.now()
+
+    for (let i = 0; i < images.length; i++) {
+      const file = images[i]!
+      const path = `${prefix}/gallery/${batch}-${i}.${ext(file)}`
+      const result = await uploadStoreImage(file, path)
+      if (result.url) newUrls.push(result.url)
+      else failed++
     }
-    setDraft({ ...draft, gallery_images: [...draft.gallery_images, result.url] })
+
+    setUploading(undefined)
+    if (newUrls.length) {
+      setDraft((d) => ({ ...d, gallery_images: [...d.gallery_images, ...newUrls] }))
+      setMessage(
+        failed
+          ? `Added ${newUrls.length} image${newUrls.length === 1 ? '' : 's'}. ${failed} failed — try smaller files.`
+          : `Added ${newUrls.length} image${newUrls.length === 1 ? '' : 's'} to the gallery.`,
+      )
+    } else {
+      setError(friendlyAdminError('No images uploaded. Check file type and size (max 5 MB each).'))
+    }
   }
 
   const uploadColorwayImage = async (index: number, file: File) => {
@@ -283,22 +301,24 @@ export function AdminProductEditPage() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="font-semibold">More product images</p>
               <label className="cursor-pointer rounded-lg border border-admin-input px-3 py-1.5 text-xs font-semibold">
-                {uploading?.startsWith('gallery-') ? 'Uploading…' : 'Upload image'}
+                {uploading?.startsWith('gallery-') ? 'Uploading…' : 'Upload images'}
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   className="sr-only"
                   disabled={Boolean(uploading)}
                   onChange={(e) => {
-                    const f = e.target.files?.[0]
-                    if (f) void uploadGalleryImage(f)
+                    const list = e.target.files
+                    if (list?.length) void uploadGalleryImages([...list])
                     e.target.value = ''
                   }}
                 />
               </label>
             </div>
             <p className="mt-1 text-xs text-admin-muted">
-              Extra shots for the product page gallery. Color swatches above still control the main hero per color.
+              Extra shots for the product page gallery — select multiple files at once. Color swatches above still
+              control the main hero per color.
             </p>
             {draft.gallery_images.length === 0 ? (
               <p className="mt-4 text-sm text-admin-muted">No extra images yet.</p>

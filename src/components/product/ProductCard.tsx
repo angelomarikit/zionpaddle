@@ -4,7 +4,14 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Product } from '../../types/commerce'
 import { formatPhp } from '../../data/mock/products'
 import { dayoColorwayAssets } from '../../data/media/dayoMedia'
-import { isDemoCatalogProduct, primaryProductImage, productHeroImage } from '../../lib/catalog/customProduct'
+import {
+  catalogProductImage,
+  decodeHtmlEntities,
+  isDemoCatalogProduct,
+  isLikelyPngMatteUrl,
+  primaryProductImage,
+  productHeroImage,
+} from '../../lib/catalog/customProduct'
 import { ProductVideo } from '../media/ProductVideo'
 import { Button } from '../ui/Button'
 import { useCart } from '../../context/CartContext'
@@ -43,14 +50,22 @@ export function ProductCard({
   const demo = isDemoCatalogProduct(product.slug)
   const assets = demo && colorway ? dayoColorwayAssets[colorway.id] : undefined
   const cutout = demo ? (assets?.heroImage ?? assets?.poster) : undefined
-  const poster = cutout ?? productHeroImage(product, colorway) ?? ''
+  const catalogArt = !demo
+  const poster = demo
+    ? cutout ?? productHeroImage(product, colorway) ?? ''
+    : catalogProductImage(product) || productHeroImage(product, colorway) || ''
+  const displayName = decodeHtmlEntities(product.name)
+  const displaySubtitle = decodeHtmlEntities(product.subtitle ?? colorway?.tagline ?? '')
   const hasCutout = Boolean(demo && cutout)
   const hasUpload = Boolean(primaryProductImage(product))
+  const matteKnockout = catalogArt && Boolean(poster) && isLikelyPngMatteUrl(poster)
   const text = surface === 'ink' ? 'text-white' : 'text-surface-ink'
   const muted = surface === 'ink' ? 'text-white/60' : 'text-cream-muted'
   const frameBg = surface === 'ink' ? 'bg-surface-ink' : 'bg-surface-cream'
+  /** Same studio tile on shop + home (ink or cream sections). */
+  const studioFrame = 'bg-[#dedbd6] ring-1 ring-inset ring-black/[0.06]'
   const allowHoverVideo = showHoverVideo && !hasCutout
-  const fit = hasCutout || hasUpload || !demo ? 'contain' : imageFill ? 'cover' : 'contain'
+  const fit = hasCutout || hasUpload || catalogArt || !demo ? 'contain' : imageFill ? 'cover' : 'contain'
 
   const addToBag = (e: { preventDefault: () => void }) => {
     e.preventDefault()
@@ -82,23 +97,41 @@ export function ProductCard({
         className={`flex flex-1 flex-col ${text}`}
       >
         <div
-          className={`relative aspect-[3/4] w-full overflow-hidden ${imageFill ? frameBg : surface === 'ink' ? 'bg-white/5' : 'bg-surface-cream'}`}
+          className={`relative aspect-[3/4] w-full overflow-hidden ${
+            catalogArt ? studioFrame : imageFill ? frameBg : surface === 'ink' ? 'bg-white/5' : 'bg-surface-cream'
+          }`}
         >
           {poster ? (
-            <ProductVideo
-              poster={poster}
-              videoSrc={
-                allowHoverVideo && demo
-                  ? assets?.video ?? dayoColorwayAssets[colorway?.id ?? '']?.video
-                  : undefined
-              }
-              alt={product.name}
-              className={`size-full bg-transparent transition-transform duration-500 group-hover:scale-[1.03] ${
-                hasCutout || hasUpload ? 'p-3 md:p-4' : imageFill ? 'scale-[1.08]' : 'p-4'
-              } [&_img]:bg-transparent [&_video]:bg-transparent`}
-              mediaFit={fit}
-              playOnHover={allowHoverVideo}
-            />
+            <div
+              className={`flex size-full items-center justify-center ${
+                catalogArt ? 'p-5 md:p-6' : hasCutout || hasUpload ? 'p-3 md:p-4' : imageFill ? '' : 'p-4'
+              }`}
+            >
+              <div
+                className={
+                  catalogArt
+                    ? 'relative aspect-[4/5] h-[min(78%,280px)] w-[min(88%,100%)] max-w-[220px] sm:max-w-[240px]'
+                    : 'size-full'
+                }
+              >
+                <ProductVideo
+                  poster={poster}
+                  videoSrc={
+                    allowHoverVideo && demo
+                      ? assets?.video ?? dayoColorwayAssets[colorway?.id ?? '']?.video
+                      : undefined
+                  }
+                  alt={displayName}
+                  className={`bg-transparent transition-transform duration-500 group-hover:scale-[1.03] ${
+                    catalogArt ? 'absolute inset-0 size-full' : 'size-full'
+                  } ${imageFill && demo && !hasCutout ? 'scale-[1.08]' : ''} ${
+                    matteKnockout ? '[&_img]:mix-blend-lighten [&_video]:mix-blend-lighten' : ''
+                  } [&_img]:size-full [&_img]:object-contain [&_video]:size-full [&_video]:object-contain [&_img]:bg-transparent [&_video]:bg-transparent`}
+                  mediaFit={fit}
+                  playOnHover={allowHoverVideo}
+                />
+              </div>
+            </div>
           ) : (
             <div className="flex size-full items-center justify-center p-6 text-center text-xs uppercase tracking-widest text-cream-muted">
               Add a product image in admin
@@ -106,9 +139,11 @@ export function ProductCard({
           )}
         </div>
         <div className={`space-y-1.5 pt-4 ${surface === 'ink' ? '' : 'bg-surface-cream'}`}>
-          <p className="text-xs uppercase tracking-widest opacity-60">{product.name}</p>
-          <h3 className="text-xl font-bold">{demo ? (colorway?.name ?? product.name) : product.name}</h3>
-          <p className={`text-sm ${muted}`}>{product.subtitle ?? colorway?.tagline}</p>
+          <p className="text-xs uppercase tracking-widest opacity-60">{displayName}</p>
+          <h3 className="text-xl font-bold">
+            {demo ? decodeHtmlEntities(colorway?.name ?? product.name) : displayName}
+          </h3>
+          <p className={`text-sm ${muted}`}>{displaySubtitle}</p>
           <p className="text-lg font-semibold">{formatPhp(product.pricePhp)}</p>
         </div>
       </Link>

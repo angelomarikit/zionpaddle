@@ -1,5 +1,5 @@
 import { HeroStage } from '../components/tempo/HeroStage'
-import { resolveHomeHeroProduct } from '../lib/catalog/homeHero'
+import { findGoldenAuraProduct, resolveHomeHeroProduct } from '../lib/catalog/homeHero'
 import { useCatalog } from '../hooks/useCatalog'
 import { useSiteContent } from '../hooks/useSiteContent'
 import {
@@ -19,17 +19,12 @@ export function HomePage() {
   const { products } = useCatalog()
   const { sections } = useSiteContent()
   const heroSection = sections.find((s) => s.sectionKey === 'hero')
-  const heroProduct = resolveHomeHeroProduct(products, heroSection)
+  const heroProduct =
+    findGoldenAuraProduct(products) ?? resolveHomeHeroProduct(products, heroSection)
 
   return (
     <>
-      <HeroStage
-        product={heroProduct}
-        onCta={() => {
-          const el = document.getElementById('size')
-          el?.scrollIntoView({ behavior: 'smooth' })
-        }}
-      />
+      <HeroStage product={heroProduct} />
       <EditorialStatementSection />
       <VariantLabSection />
       <TechSection />

@@ -11,6 +11,20 @@ import { flagshipProduct } from '../../data/mock/flagship'
 import { collections } from '../../data/mock/collections'
 import { getProductsByCollection, products, formatPhp } from '../../data/mock/products'
 import { dayoColorwayAssets, dayoSiteMedia } from '../../data/media/dayoMedia'
+import {
+  findGoldenAuraProduct,
+  HOME_CATALOG_PREVIEW_LIMIT,
+  resolveHomeHeroProduct,
+} from '../../lib/catalog/homeHero'
+import type { Collection } from '../../types/commerce'
+import {
+  catalogProductImage,
+  isDemoCatalogProduct,
+  liveCatalogProducts,
+  liveProductsInCollection,
+  transparentHeroCutout,
+} from '../../lib/catalog/customProduct'
+import { useCatalog } from '../../hooks/useCatalog'
 import { useSiteContent } from '../../hooks/useSiteContent'
 import { ProductVideo } from '../media/ProductVideo'
 import { ContentRail } from '../layout/ContentRail'
@@ -62,7 +76,16 @@ export function EditorialStatementSection() {
 }
 
 export function VariantLabSection() {
-  const [grip, setGrip] = useState(flagshipProduct.gripSizes[0].id)
+  const { products } = useCatalog()
+  const { sections } = useSiteContent()
+  const heroSection = sections.find((s) => s.sectionKey === 'hero')
+  const heroProduct =
+    findGoldenAuraProduct(products) ?? resolveHomeHeroProduct(products, heroSection) ?? flagshipProduct
+  const demo = isDemoCatalogProduct(heroProduct.slug)
+  const gripProduct = demo ? flagshipProduct : heroProduct
+  const cutout = transparentHeroCutout(heroProduct, heroProduct.colorways[0])
+
+  const [grip, setGrip] = useState(gripProduct.gripSizes[0]?.id ?? 'standard')
   const [unit, setUnit] = useState<'in' | 'cm'>('in')
   const [fit, setFit] = useState<'narrow' | 'true' | 'wide'>('true')
   const reduce = useReducedMotion()
@@ -74,7 +97,7 @@ export function VariantLabSection() {
           <h2 className="max-w-2xl text-3xl font-bold md:text-4xl">Your grip, sorted.</h2>
           <div className="mt-10">
             <VariantLab
-              gripSizes={flagshipProduct.gripSizes}
+              gripSizes={gripProduct.gripSizes}
               selectedGrip={grip}
               onGripChange={setGrip}
               unit={unit}
@@ -84,15 +107,25 @@ export function VariantLabSection() {
             />
           </div>
         </div>
-        <div className="relative min-h-[min(60vh,520px)] overflow-hidden bg-surface-ink">
-          <ProductVideo
-            poster={dayoColorwayAssets['coral-volt']?.poster ?? '/assets/dayo/01_graphite_volt.jpg'}
-            videoSrc={dayoColorwayAssets['coral-volt']?.video}
-            alt="Zion Tempo Pro — grip reference"
-            className="absolute inset-0 size-full"
-            mediaFit="cover"
-            autoPlayLoop={!reduce}
-          />
+        <div className="relative flex min-h-[min(60vh,520px)] items-center justify-center overflow-hidden bg-surface-ink p-6 md:p-10">
+          {cutout && !demo ? (
+            <img
+              src={cutout}
+              alt={`${heroProduct.name} — grip reference`}
+              className="max-h-[min(52vh,460px)] w-full max-w-[min(92%,400px)] object-contain mix-blend-lighten drop-shadow-[0_24px_48px_rgba(0,0,0,0.45)]"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <ProductVideo
+              poster={dayoColorwayAssets['coral-volt']?.poster ?? '/assets/dayo/01_graphite_volt.jpg'}
+              videoSrc={dayoColorwayAssets['coral-volt']?.video}
+              alt="Zion Tempo Pro — grip reference"
+              className="absolute inset-0 size-full [&_img]:object-contain [&_video]:object-contain"
+              mediaFit="contain"
+              autoPlayLoop={!reduce}
+            />
+          )}
         </div>
       </div>
     </SectionShell>
@@ -133,31 +166,46 @@ export function TechSection() {
 }
 
 export function ColourwaysSection() {
+  const { products } = useCatalog()
+  const lineup = liveCatalogProducts(products).slice(0, HOME_CATALOG_PREVIEW_LIMIT)
+
   return (
     <SectionShell index="05" label="Colourways" surface="cream" wide>
       <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-3xl font-bold md:text-4xl">Five colours. Same fast feel.</h2>
+          <h2 className="text-3xl font-bold md:text-4xl">
+            {lineup.length ? 'From our catalog.' : 'Five colours. Same fast feel.'}
+          </h2>
           <p className="mt-2 max-w-lg text-cream-muted">
-            Flagship Tempo Pro colorways — tap a card to open the PDP.
+            {lineup.length
+              ? 'Live paddles from your shop — tap a card to open the product page.'
+              : 'Flagship Tempo Pro colorways — tap a card to open the PDP.'}
           </p>
         </div>
         <Link to="/collections" className="text-sm font-semibold uppercase tracking-wide">
           Shop all
         </Link>
       </div>
-      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-        {flagshipProduct.colorways.map((c) => (
-          <ProductCard
-            key={c.id}
-            showHoverVideo={false}
-            product={{
-              ...flagshipProduct,
-              subtitle: c.tagline,
-              colorways: [{ ...c }],
-            }}
-          />
-        ))}
+      <div
+        className={`mt-10 grid gap-6 sm:grid-cols-2 ${
+          lineup.length > 0 ? 'lg:grid-cols-3' : 'lg:grid-cols-5'
+        }`}
+      >
+        {lineup.length > 0
+          ? lineup.map((p) => (
+              <ProductCard key={p.id} product={p} showHoverVideo={false} imageFill={false} />
+            ))
+          : flagshipProduct.colorways.map((c) => (
+              <ProductCard
+                key={c.id}
+                showHoverVideo={false}
+                product={{
+                  ...flagshipProduct,
+                  subtitle: c.tagline,
+                  colorways: [{ ...c }],
+                }}
+              />
+            ))}
       </div>
     </SectionShell>
   )
@@ -253,60 +301,135 @@ function productWithColorwayArt(product: (typeof products)[0], index: number) {
   }
 }
 
+function collectionTileFromLive(col: Collection, products: Product[]) {
+  const inCollection = liveProductsInCollection(products, col.slug)
+  const lead = inCollection[0]
+  const heroImg = lead ? catalogProductImage(lead) : col.banner
+  const fromPrice = inCollection.length
+    ? Math.min(...inCollection.map((p) => p.pricePhp))
+    : undefined
+  return { col, heroImg, fromPrice, catalogArt: Boolean(lead) }
+}
+
 export function CollectionsTeaser() {
+  const { products, collections: catalogCollections } = useCatalog()
+  const live = liveCatalogProducts(products)
+  const liveCollectionTiles = catalogCollections
+    .map((col) => collectionTileFromLive(col, products))
+    .filter((t) => t.fromPrice !== undefined)
+
+  const hasLiveCollections = liveCollectionTiles.length > 0
+  const productTiles = live.slice(0, 3).map((p) => ({
+    key: p.id,
+    to: `/products/${p.slug}`,
+    title: p.name,
+    description: p.subtitle ?? p.description.slice(0, 72),
+    heroImg: catalogProductImage(p),
+    fromPrice: p.pricePhp,
+    label: 'Product',
+  }))
+
+  const mockTiles = collections.map((col, i) => {
+    const preview = getProductsByCollection(col.slug).slice(0, 1)[0]
+    const asset = [dayoColorwayAssets['cobalt-rush'], dayoColorwayAssets['lavender-coral'], dayoColorwayAssets['volt-graphite']][i]
+    return {
+      key: col.id,
+      to: `/collections/${col.slug}`,
+      title: col.name,
+      description: col.description,
+      heroImg: asset?.heroImage ?? asset?.poster ?? col.banner,
+      fromPrice: preview?.pricePhp,
+      label: 'Collection',
+      catalogArt: false,
+    }
+  })
+
+  const tiles = hasLiveCollections
+    ? liveCollectionTiles.map(({ col, heroImg, fromPrice, catalogArt }) => ({
+        key: col.id,
+        to: `/collections/${col.slug}`,
+        title: col.name,
+        description: col.description,
+        heroImg,
+        fromPrice,
+        label: 'Collection' as const,
+        catalogArt,
+      }))
+    : live.length > 0
+      ? productTiles.map((t) => ({ ...t, catalogArt: true }))
+      : mockTiles
+
   return (
     <SectionShell surface="cream" label="Collections" index="08" wide>
       <h2 className="text-3xl font-bold md:text-4xl">Shop by line</h2>
-      <p className="mt-2 max-w-lg text-cream-muted">Three collections — one tempo. Dive into the full catalog.</p>
+      <p className="mt-2 max-w-lg text-cream-muted">
+        {live.length
+          ? 'Your live collections and paddles from the shop catalog.'
+          : 'Three collections — one tempo. Dive into the full catalog.'}
+      </p>
       <div className="mt-10 grid gap-5 md:grid-cols-3">
-        {collections.map((col, i) => {
-          const preview = getProductsByCollection(col.slug).slice(0, 1)[0]
-          const asset = [dayoColorwayAssets['cobalt-rush'], dayoColorwayAssets['lavender-coral'], dayoColorwayAssets['volt-graphite']][i]
-          const heroImg = asset?.heroImage ?? asset?.poster ?? col.banner
-          return (
-            <Link
-              key={col.id}
-              to={`/collections/${col.slug}`}
-              className="group flex flex-col overflow-hidden bg-surface-ink text-white shadow-md transition hover:shadow-2xl"
-            >
-              <div className="relative aspect-[3/4] w-full overflow-hidden bg-surface-ink">
+        {tiles.map((tile) => (
+          <Link
+            key={tile.key}
+            to={tile.to}
+            className="group flex flex-col overflow-hidden bg-surface-ink text-white shadow-md transition hover:shadow-2xl"
+          >
+            <div className="relative aspect-[3/4] w-full overflow-hidden bg-surface-ink">
+              {tile.heroImg ? (
                 <img
-                  src={heroImg}
-                  alt={`${col.name} collection`}
-                  className="size-full object-contain p-5 transition-transform duration-700 group-hover:scale-[1.04]"
+                  src={tile.heroImg}
+                  alt={tile.title}
+                  className={`size-full object-contain p-5 transition-transform duration-700 group-hover:scale-[1.04] ${
+                    tile.catalogArt ? 'mix-blend-lighten' : ''
+                  }`}
                 />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface-ink to-transparent" />
-              </div>
-              <div className="relative border-t border-white/10 p-6">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">Collection</p>
-                <h3 className="mt-1 text-2xl font-bold">{col.name}</h3>
-                <p className="mt-2 text-sm text-white/70">{col.description}</p>
-                {preview && (
-                  <p className="mt-4 font-mono text-xs uppercase text-accent-volt">
-                    From {formatPhp(preview.pricePhp)} →
-                  </p>
-                )}
-              </div>
-            </Link>
-          )
-        })}
+              ) : null}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface-ink to-transparent" />
+            </div>
+            <div className="relative border-t border-white/10 p-6">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">{tile.label}</p>
+              <h3 className="mt-1 text-2xl font-bold">{tile.title}</h3>
+              <p className="mt-2 line-clamp-2 text-sm text-white/70">{tile.description}</p>
+              {tile.fromPrice !== undefined && (
+                <p className="mt-4 font-mono text-xs uppercase text-accent-volt">
+                  From {formatPhp(tile.fromPrice)} →
+                </p>
+              )}
+            </div>
+          </Link>
+        ))}
       </div>
     </SectionShell>
   )
 }
 
 export function BestSellersSection() {
-  const proLine = getProductsByCollection('pro-series')
-    .slice(0, 5)
-    .map((p, i) => productWithColorwayArt(p, i))
+  const { products } = useCatalog()
+  const live = liveCatalogProducts(products)
+  const featured =
+    live.length > 0
+      ? live.slice(0, HOME_CATALOG_PREVIEW_LIMIT)
+      : getProductsByCollection('pro-series')
+          .slice(0, HOME_CATALOG_PREVIEW_LIMIT)
+          .map((p, i) => productWithColorwayArt(p, i))
 
   return (
     <SectionShell surface="ink" label="Featured" index="09" wide>
       <h2 className="text-3xl font-bold md:text-4xl">Courtside favorites</h2>
-      <p className="mt-2 max-w-lg text-ink-muted">Pro Series lineup — every card uses real ZION colorway art.</p>
-      <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-        {proLine.map((p) => (
-          <ProductCard key={p.id} product={p} surface="ink" showHoverVideo={p.hero} imageFill />
+      <p className="mt-2 max-w-lg text-ink-muted">
+        {live.length
+          ? 'Live paddles from your catalog.'
+          : 'Pro Series lineup — every card uses real ZION colorway art.'}
+      </p>
+      <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {featured.map((p) => (
+          <ProductCard
+            key={p.id}
+            product={p}
+            surface="ink"
+            showHoverVideo={false}
+            imageFill={false}
+          />
         ))}
       </div>
     </SectionShell>

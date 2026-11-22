@@ -6,7 +6,11 @@ import { formatPhp } from '../../data/mock/products'
 import { Button } from '../ui/Button'
 import { springTransition } from '../../lib/motion'
 import { dayoColorwayAssets } from '../../data/media/dayoMedia'
-import { isDemoCatalogProduct, productHeroImage } from '../../lib/catalog/customProduct'
+import {
+  isDemoCatalogProduct,
+  productHeroImage,
+  transparentHeroCutout,
+} from '../../lib/catalog/customProduct'
 import { ContentRail } from '../layout/ContentRail'
 
 type Props = {
@@ -21,10 +25,10 @@ const floatCycle = {
   ease: 'easeInOut' as const,
 }
 
-export function HeroStage({ product, onColourChange, onCta }: Props) {
+function HeroProductStage({ product, onColourChange, onCta }: Props) {
+  const demo = isDemoCatalogProduct(product.slug)
   const [active, setActive] = useState(product.colorways[0])
   const reduce = useReducedMotion()
-  const demo = isDemoCatalogProduct(product.slug)
 
   useEffect(() => {
     setActive(product.colorways[0])
@@ -38,10 +42,11 @@ export function HeroStage({ product, onColourChange, onCta }: Props) {
     onColourChange?.(c)
   }
 
-  /** Transparent cutouts only — no hero MP4 (videos carry a gray studio matte). */
   const heroSrc = demo
     ? (assets?.heroImage ?? assets?.poster ?? active.image)
-    : productHeroImage(product, active)
+    : transparentHeroCutout(product, active)
+  /** Catalog PNGs are often saved with an opaque black matte instead of alpha. */
+  const heroMatteKnockout = !demo && Boolean(heroSrc)
 
   return (
     <section className="full-bleed relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-surface-ink pt-[calc(var(--dayo-announcement-h,0px)+5rem)]">
@@ -60,7 +65,7 @@ export function HeroStage({ product, onColourChange, onCta }: Props) {
             </h1>
             <p className="text-sm leading-relaxed text-ink-muted">{product.description.slice(0, 120)}…</p>
             <Button variant="coral" to={`/products/${product.slug}`} className="w-fit" onClick={onCta}>
-              Shop {product.name}
+              Shop now
               <ArrowRight className="size-4" aria-hidden />
             </Button>
           </div>
@@ -80,7 +85,9 @@ export function HeroStage({ product, onColourChange, onCta }: Props) {
             <AnimatePresence mode="wait">
               <motion.div
                 key={active.id}
-                className="relative flex h-[min(54vh,620px)] w-full max-w-[min(94vw,520px)] items-center justify-center lg:max-w-[min(46vw,560px)]"
+                className={`relative flex h-[min(44vh,480px)] w-full max-w-[min(88vw,400px)] items-center justify-center lg:max-w-[min(38vw,420px)] ${
+                  heroMatteKnockout ? 'isolate bg-surface-ink' : ''
+                }`}
                 initial={reduce ? false : { opacity: 0, scale: 0.94 }}
                 animate={
                   reduce
@@ -101,7 +108,11 @@ export function HeroStage({ product, onColourChange, onCta }: Props) {
                 <img
                   src={heroSrc}
                   alt={`${product.name} — ${active.name}`}
-                  className="size-full max-h-full object-contain bg-transparent drop-shadow-[0_28px_56px_rgba(0,0,0,0.55)]"
+                  className={`size-full max-h-full object-contain bg-transparent ${
+                    heroMatteKnockout
+                      ? 'mix-blend-lighten drop-shadow-[0_24px_48px_rgba(0,0,0,0.45)]'
+                      : 'drop-shadow-[0_28px_56px_rgba(0,0,0,0.55)]'
+                  }`}
                   decoding="async"
                   fetchPriority="high"
                 />
@@ -166,4 +177,8 @@ export function HeroStage({ product, onColourChange, onCta }: Props) {
       </div>
     </section>
   )
+}
+
+export function HeroStage(props: Props) {
+  return <HeroProductStage {...props} />
 }

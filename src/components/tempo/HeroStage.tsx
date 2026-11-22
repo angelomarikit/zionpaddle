@@ -6,11 +6,7 @@ import { formatPhp } from '../../data/mock/products'
 import { Button } from '../ui/Button'
 import { springTransition } from '../../lib/motion'
 import { dayoColorwayAssets } from '../../data/media/dayoMedia'
-import {
-  isDemoCatalogProduct,
-  productHeroImage,
-  transparentHeroCutout,
-} from '../../lib/catalog/customProduct'
+import { isDemoCatalogProduct, transparentHeroCutout } from '../../lib/catalog/customProduct'
 import { ContentRail } from '../layout/ContentRail'
 
 type Props = {

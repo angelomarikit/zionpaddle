@@ -16,7 +16,7 @@ import {
   HOME_CATALOG_PREVIEW_LIMIT,
   resolveHomeHeroProduct,
 } from '../../lib/catalog/homeHero'
-import type { Collection } from '../../types/commerce'
+import type { Collection, Product } from '../../types/commerce'
 import {
   catalogProductImage,
   isDemoCatalogProduct,

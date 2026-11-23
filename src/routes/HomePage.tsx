@@ -1,8 +1,8 @@
 import { HeroStage } from '../components/tempo/HeroStage'
 import { HOME_PAGE_HERO_VIDEO } from '../data/media/homeHeroMedia'
-import { findZionTitanProduct, resolveHomeHeroProduct } from '../lib/catalog/homeHero'
+import { resolvePinnedHomeHeroProduct } from '../lib/catalog/homeHero'
 import { useCatalog } from '../hooks/useCatalog'
-import { useSiteContent } from '../hooks/useSiteContent'
+import { useMemo } from 'react'
 import {
   BestSellersSection,
   BlogEditorialSection,
@@ -18,10 +18,7 @@ import {
 
 export function HomePage() {
   const { products } = useCatalog()
-  const { sections } = useSiteContent()
-  const heroSection = sections.find((s) => s.sectionKey === 'hero')
-  const heroProduct =
-    findZionTitanProduct(products) ?? resolveHomeHeroProduct(products, heroSection)
+  const heroProduct = useMemo(() => resolvePinnedHomeHeroProduct(products), [products])
 
   return (
     <>

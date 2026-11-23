@@ -21,9 +21,10 @@ export function useCatalog() {
       const merged = mergeStorefrontProducts(fromDb, mockProducts)
       return filterDeletedCatalogProducts(applyProductPatches(merged))
     },
-    staleTime: 0,
+    staleTime: 30_000,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
+    placeholderData: (previous) => previous,
   })
 
   const collectionsQuery = useQuery({

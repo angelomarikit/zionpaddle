@@ -12,9 +12,8 @@ import { collections } from '../../data/mock/collections'
 import { getProductsByCollection, products, formatPhp } from '../../data/mock/products'
 import { dayoColorwayAssets, dayoSiteMedia } from '../../data/media/dayoMedia'
 import {
-  findZionTitanProduct,
   HOME_CATALOG_PREVIEW_LIMIT,
-  resolveHomeHeroProduct,
+  resolvePinnedHomeHeroProduct,
 } from '../../lib/catalog/homeHero'
 import type { Collection, Product } from '../../types/commerce'
 import {
@@ -77,10 +76,7 @@ export function EditorialStatementSection() {
 
 export function VariantLabSection() {
   const { products } = useCatalog()
-  const { sections } = useSiteContent()
-  const heroSection = sections.find((s) => s.sectionKey === 'hero')
-  const heroProduct =
-    findZionTitanProduct(products) ?? resolveHomeHeroProduct(products, heroSection) ?? flagshipProduct
+  const heroProduct = resolvePinnedHomeHeroProduct(products)
   const demo = isDemoCatalogProduct(heroProduct.slug)
   const gripProduct = demo ? flagshipProduct : heroProduct
   const cutout = transparentHeroCutout(heroProduct, heroProduct.colorways[0])

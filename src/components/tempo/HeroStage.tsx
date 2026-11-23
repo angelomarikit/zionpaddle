@@ -13,12 +13,64 @@ type Props = {
   product: Product
   onColourChange?: (colorway: Colorway) => void
   onCta?: () => void
+  /** When set, homepage uses a full-width video (no product cutout). */
+  homeVideoSrc?: string
 }
 
 const floatCycle = {
   duration: 4.8,
   repeat: Infinity,
   ease: 'easeInOut' as const,
+}
+
+function HeroVideoStage({ product, videoSrc, onCta }: { product: Product; videoSrc: string; onCta?: () => void }) {
+  const reduce = useReducedMotion()
+
+  return (
+    <section className="full-bleed relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-surface-ink pt-[calc(var(--dayo-announcement-h,0px)+5rem)]">
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <video
+          className="absolute inset-0 size-full object-contain object-center"
+          src={videoSrc}
+          autoPlay={!reduce}
+          muted
+          playsInline
+          loop
+          preload="auto"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-surface-ink/90 via-surface-ink/45 to-surface-ink/20" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-surface-ink to-transparent" />
+      </div>
+
+      <ContentRail className="relative z-10 flex flex-1 flex-col justify-end pb-10 pt-8 md:pb-14 md:pt-12">
+        <motion.p
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-[12%] select-none text-center font-display text-[clamp(3rem,16vw,9rem)] font-extrabold italic leading-[0.92] tracking-tight text-white/[0.14]"
+        >
+          ZION
+        </motion.p>
+        <div className="relative max-w-lg space-y-5">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-white/50">Featured</p>
+          <h1 className="text-[clamp(1.75rem,4vw,2.75rem)] font-bold leading-tight text-white">{product.name}</h1>
+          {product.subtitle ? (
+            <p className="text-lg text-white/80">{product.subtitle}</p>
+          ) : null}
+          <Button variant="coral" to={`/products/${product.slug}`} className="w-fit" onClick={onCta}>
+            Shop now
+            <ArrowRight className="size-4" aria-hidden />
+          </Button>
+        </div>
+      </ContentRail>
+
+      <div className="relative z-10 border-t border-white/10">
+        <ContentRail className="py-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">
+            Carbon face · 16mm core · USA Pickleball build
+          </p>
+        </ContentRail>
+      </div>
+    </section>
+  )
 }
 
 function HeroProductStage({ product, onColourChange, onCta }: Props) {
@@ -175,6 +227,9 @@ function HeroProductStage({ product, onColourChange, onCta }: Props) {
   )
 }
 
-export function HeroStage(props: Props) {
+export function HeroStage({ homeVideoSrc, ...props }: Props) {
+  if (homeVideoSrc) {
+    return <HeroVideoStage product={props.product} videoSrc={homeVideoSrc} onCta={props.onCta} />
+  }
   return <HeroProductStage {...props} />
 }

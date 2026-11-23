@@ -1,4 +1,5 @@
 import { HeroStage } from '../components/tempo/HeroStage'
+import { HOME_PAGE_HERO_VIDEO } from '../data/media/homeHeroMedia'
 import { findGoldenAuraProduct, resolveHomeHeroProduct } from '../lib/catalog/homeHero'
 import { useCatalog } from '../hooks/useCatalog'
 import { useSiteContent } from '../hooks/useSiteContent'
@@ -24,7 +25,7 @@ export function HomePage() {
 
   return (
     <>
-      <HeroStage product={heroProduct} />
+      <HeroStage product={heroProduct} homeVideoSrc={HOME_PAGE_HERO_VIDEO} />
       <EditorialStatementSection />
       <VariantLabSection />
       <TechSection />

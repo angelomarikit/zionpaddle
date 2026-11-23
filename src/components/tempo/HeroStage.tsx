@@ -49,13 +49,9 @@ function HeroVideoStage({ product, videoSrc, onCta }: { product: Product; videoS
         >
           ZION
         </motion.p>
-        <div className="relative max-w-lg space-y-5">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-white/50">Featured</p>
-          <h1 className="text-[clamp(1.75rem,4vw,2.75rem)] font-bold leading-tight text-white">{product.name}</h1>
-          {product.subtitle ? (
-            <p className="text-lg text-white/80">{product.subtitle}</p>
-          ) : null}
-          <Button variant="coral" to={`/products/${product.slug}`} className="w-fit" onClick={onCta}>
+        <div className="relative">
+          <h1 className="sr-only">{product.name}</h1>
+          <Button variant="coral" to="/collections" className="w-fit" onClick={onCta}>
             Shop now
             <ArrowRight className="size-4" aria-hidden />
           </Button>

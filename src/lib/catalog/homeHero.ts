@@ -2,8 +2,8 @@ import type { Product } from '../../types/commerce'
 import type { SiteSection } from '../../types/siteCms'
 import { flagshipProduct } from '../../data/mock/flagship'
 
-/** Live catalog hero — transparent PNG cutout (Sypik Triton 5 Golden Aura). */
-export const DEFAULT_HOME_HERO_SLUG = 'sypik-triton-5-golden-aura'
+/** Home hero / featured product (Shop now target). */
+export const DEFAULT_HOME_HERO_SLUG = 'zion-titan'
 
 /** Home “From our catalog” grid — max product cards. */
 export const HOME_CATALOG_PREVIEW_LIMIT = 6
@@ -12,9 +12,14 @@ export type HomeHeroSectionExtra = {
   homeProductSlug?: string
 }
 
-export function findGoldenAuraProduct(products: Product[]): Product | undefined {
+export function findZionTitanProduct(products: Product[]): Product | undefined {
   const bySlug = products.find((p) => p.slug === DEFAULT_HOME_HERO_SLUG)
   if (bySlug) return bySlug
+  return products.find((p) => /^zion\s*titan/i.test(p.name.trim()) || /zion-titan/i.test(p.slug))
+}
+
+/** @deprecated Use findZionTitanProduct — kept for legacy slug lookups. */
+export function findGoldenAuraProduct(products: Product[]): Product | undefined {
   return products.find(
     (p) => /golden\s*aura/i.test(p.name) || /golden-aura|golden_aura/i.test(p.slug),
   )
@@ -33,8 +38,8 @@ export function resolveHomeHeroProduct(products: Product[], heroSection?: SiteSe
     const picked = products.find((p) => p.slug === slug)
     if (picked) return picked
   }
-  const goldenAura = findGoldenAuraProduct(products)
-  if (goldenAura) return goldenAura
+  const zionTitan = findZionTitanProduct(products)
+  if (zionTitan) return zionTitan
   const flagged = products.find((p) => p.hero)
   if (flagged) return flagged
   const flagship = products.find((p) => p.slug === flagshipProduct.slug)

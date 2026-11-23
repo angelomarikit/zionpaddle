@@ -12,7 +12,7 @@ import { collections } from '../../data/mock/collections'
 import { getProductsByCollection, products, formatPhp } from '../../data/mock/products'
 import { dayoColorwayAssets, dayoSiteMedia } from '../../data/media/dayoMedia'
 import {
-  findGoldenAuraProduct,
+  findZionTitanProduct,
   HOME_CATALOG_PREVIEW_LIMIT,
   resolveHomeHeroProduct,
 } from '../../lib/catalog/homeHero'
@@ -80,7 +80,7 @@ export function VariantLabSection() {
   const { sections } = useSiteContent()
   const heroSection = sections.find((s) => s.sectionKey === 'hero')
   const heroProduct =
-    findGoldenAuraProduct(products) ?? resolveHomeHeroProduct(products, heroSection) ?? flagshipProduct
+    findZionTitanProduct(products) ?? resolveHomeHeroProduct(products, heroSection) ?? flagshipProduct
   const demo = isDemoCatalogProduct(heroProduct.slug)
   const gripProduct = demo ? flagshipProduct : heroProduct
   const cutout = transparentHeroCutout(heroProduct, heroProduct.colorways[0])
